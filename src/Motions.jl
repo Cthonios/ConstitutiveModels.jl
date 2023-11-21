@@ -1,24 +1,73 @@
+"""
+"""
 abstract type AbstractMotion end
+"""
+"""
 abstract type SimpleMotion <: AbstractMotion end
-
+"""
+Returns the deformation gradient for a given motion
+"""
 function deformation_gradient end
 function motion_objective end
 
+@doc raw"""
+Provides an analytic motion for uniaxial stress
+assuming perfect incompressibility.
+
+This is
+```math
+\mathbf{F} = \begin{bmatrix}
+\lambda & 0 &                        0 \\
+0       & \frac{1}{\sqrt{\lambda}} & 0 \\
+0       & 0                        & \frac{1}{\sqrt{\lambda}}
+\end{bmatrix}
+```
+"""
 struct IsochoricUniaxialStress <: SimpleMotion
 end
 
+"""
+"""
 deformation_gradient(::Type{IsochoricUniaxialStress}, λ::T) where T <: Number = 
 Tensor{2, 3, T, 9}((λ, 0., 0., 0., 1. / sqrt(λ), 0., 0., 0., 1. / sqrt(λ)))
 
+@doc raw"""
+Provides an analytic motion for simple shear.
+
+This is
+```math
+\mathbf{F} = \begin{bmatrix}
+1 & \gamma & 0 \\
+0 & 1      & 0 \\
+0 & 0      & 1
+\end{bmatrix}
+```
+"""
 struct SimpleShear <: SimpleMotion
 end
 
+"""
+"""
 deformation_gradient(::Type{SimpleShear}, γ::T) where T <: Number = 
 Tensor{2, 3, T, 9}((1., 0., 0., γ, 1., 0., 0., 0., 1.))
 
+@doc raw"""
+Provides an analytic motion for uniaxial strain
+
+This is
+```math
+\mathbf{F} = \begin{bmatrix}
+\lambda & 0 & 0 \\
+0       & 1 & 0 \\
+0       & 0 & 1
+\end{bmatrix}
+```
+"""
 struct UniaxialStrain <: SimpleMotion
 end
 
+"""
+"""
 deformation_gradient(::Type{UniaxialStrain}, λ::T) where T <: Number = 
 Tensor{2, 3, T, 9}((λ, 0., 0., 0., 1., 0., 0., 0., 1.)) 
 
@@ -48,6 +97,8 @@ function motion_objective(
   return Pvec
 end
 
+"""
+"""
 function deformation_gradient(
   motion::Type{UniaxialStressDisplacementControl},
   model::Mod, props::Props, λ::T
