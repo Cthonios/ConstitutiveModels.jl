@@ -1,19 +1,17 @@
-abstract type MechanicalModel <: ConstitutiveModel end
-abstract type HyperelasticModel <: ConstitutiveModel end
+abstract type MechanicalModel{NProps, NStateVars} <: ConstitutiveModel{NProps, NStateVars} end
+abstract type HyperelasticModel{NProps, NStateVars} <: MechanicalModel{NProps, NStateVars} end
 
-# general AD stuff
-pk1_stress(model::M, F::T, props::V) where {M <: HyperelasticModel, T <: Tensor{2, 3, <:Number}, V <: AbstractArray{<:Number, 1}} = 
-Tensors.gradient(z -> strain_energy_density(model, z, props), F)
-pk2_stress(model::M, C::T, props::V) where {M <: HyperelasticModel, T <: SymmetricTensor{2, 3, <:Number}, V <: AbstractArray{<:Number, 1}} = 
-2. * Tensors.gradient(z -> strain_energy_density(model, z, props), C)
+function Base.zeros(type::Type, mod::Mod) where Mod <: HyperelasticModel
+  n_props      = number_of_properties(mod)
+  n_state_vars = number_of_state_variables(mod)
+  return SVector{n_props, type}, SVector{n_state_vars, type}
+end
 
-material_tangent(model::M, F::T, props::V) where {M <: HyperelasticModel, T <: Tensor{2, 3, <:Number}, V <: AbstractArray{<:Number, 1}} =
-Tensors.hessian(z -> strain_energy_density(model, z, props), F)
+initialize_state(model::Mod, type::Type = Float64) where Mod <: HyperelasticModel = 
+zeros(SVector{number_of_state_variables(model), type})
 
-# acoustic_tensor(model::M, F::T, props::V) where {M <: HyperelasticModel, T <: Tensor{2, 3, <:Number}, V <: AbstractArray{<:Number, 1}} =
-
-property_adjoint(model::M, F::T, props::V) where {M <: HyperelasticModel, T <: Tensor{2, 3, <:Number}, V <: AbstractArray{<:Number, 1}} = 
-ForwardDiff.gradient(z -> strain_energy_density(model, F, z), props)
+update_state(::Mod, state::SVector{NStateVars, <:Number}) where {Mod <: HyperelasticModel, NStateVars} =
+state
 
 # modles to include
 include("mechanical_models/NeoHookean.jl")
