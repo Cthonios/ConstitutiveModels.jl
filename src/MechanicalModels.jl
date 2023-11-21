@@ -1,7 +1,7 @@
 # super type
 abstract type MechanicalModel{NProps, NStateVars} <: ConstitutiveModel{NProps, NStateVars} end
 
-function initialize_properties(model::Mod, props_in::V; type::Type = MVector) where {Mod <: MechanicalModel, V <: AbstractArray{<:Number, 1}}
+function initialize_properties(model::Mod, props_in::V; type::Type = SVector) where {Mod <: MechanicalModel, V <: AbstractArray{<:Number, 1}}
   @assert length(props_in) == number_of_properties(model)
   if type <: MVector
     props = MVector{number_of_properties(model), eltype(V)}(props_in)
@@ -22,14 +22,12 @@ abstract type HyperelasticModel{NProps, NStateVars} <: MechanicalModel{NProps, N
 
 
 
-function initialize_state(model::Mod; type::Type = MVector) where Mod <: HyperelasticModel
+function initialize_state(model::Mod; type::Type = SVector) where Mod <: HyperelasticModel
   if type <: Vector
     state = zeros(T, 0)
   elseif type <: MVector
     state = zeros(MVector{number_of_state_variables(model), Float64})
   elseif type <: SVector
-    @warn "Note these can't be used with in place methods"
-    @warn "Note SVectors can't be used with Enzyme"
     # TODO make type here parameteric
     state = zeros(SVector{number_of_state_variables(model), Float64})
   else
@@ -40,7 +38,7 @@ function initialize_state(model::Mod; type::Type = MVector) where Mod <: Hyperel
 end
 
 # modles to include
-# include("hyperelastic_models/LinearElastic.jl")
+include("hyperelastic_models/LinearElastic.jl")
 include("hyperelastic_models/NeoHookean.jl")
 
 # abstract type PlasticityModel{NProps, NStateVars} <: MechanicalModel{NProps, NStateVars} end

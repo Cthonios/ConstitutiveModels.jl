@@ -148,9 +148,9 @@ function motion_objective(
   model::Mod, props::Props, state, type::Type,
   u, p
 ) where {Mod <: ConstitutiveModel, Props <: AbstractArray}
-  F        = form_deformation_gradient(motion, p[1], u, type)
-  P, state = pk1_stress(model, props, F, state)
-  Pvec     = @views tovoigt(SVector, P)[2:end]
+  F    = form_deformation_gradient(motion, p[1], u, type)
+  P    = pk1_stress(model, props, F, state)
+  Pvec = @views tovoigt(SVector, P)[2:end]
   return Pvec
 end
 
@@ -184,7 +184,7 @@ end
 
 
 # default 
-const DefaultMotionType = MMatrix
+const DefaultMotionType = Tensor
 deformation_gradient(motion::Type{<:SimpleMotion}, λ::T; type::Type = DefaultMotionType) where T <: Number = 
 deformation_gradient(motion, λ, type)
 deformation_gradient(motion::Type{<:SimpleMotion}, model::Mod, props::Props, state, λ::T; type::Type = DefaultMotionType) where {Mod <: MechanicalModel, Props <: AbstractArray, T <: Number} =

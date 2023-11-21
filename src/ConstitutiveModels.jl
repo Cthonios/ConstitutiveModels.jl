@@ -11,9 +11,9 @@ export HyperelasticModel
 export LinearElastic
 export NeoHookean
 
-export cauchy_stress!
-export energy!
-export pk1_stress!
+export cauchy_stress
+export energy
+export pk1_stress
 
 # motions
 export IsochoricUniaxialStress
@@ -28,6 +28,7 @@ using DocStringExtensions
 using NonlinearSolve
 using StaticArrays
 using Tensors
+import Tensors: tdot, dott
 
 # for docs
 @template (FUNCTIONS, METHODS, MACROS) = 
@@ -51,12 +52,12 @@ number_of_state_variables(::ConstitutiveModel{NProps, NStateVars}) where {NProps
 Base.size(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = (NProps, NStateVars)
 
 # some math helpers to be consistent with Tensors.jl
-tdot(F::Matrix{T}) where T <: Number = tr(F' * F)
-tdot(F::MMatrix{3, 3, T, 9}) where T <: Number = tr(F' * F)
-tdot(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F' * F)
-dott(F::Matrix{T}) where T <: Number = tr(F * F')
-dott(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F * F')
-dott(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F * F')
+Tensors.tdot(F::Matrix{T}) where T <: Number = tr(F' * F)
+Tensors.tdot(F::MMatrix{3, 3, T, 9}) where T <: Number = tr(F' * F)
+Tensors.tdot(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F' * F)
+Tensors.dott(F::Matrix{T}) where T <: Number = tr(F * F')
+Tensors.dott(F::MMatrix{3, 3, T, 9}) where T <: Number = tr(F * F')
+Tensors.dott(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F * F')
 
 include("MechanicalModels.jl")
 include("Motions.jl")
