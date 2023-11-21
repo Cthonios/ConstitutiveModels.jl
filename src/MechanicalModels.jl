@@ -19,4 +19,6 @@ include("hyperelastic_models/LinearElastic.jl")
 include("hyperelastic_models/NeoHookean.jl")
 
 abstract type PlasticityModel{NProps, NStateVars} <: MechanicalModel{NProps, NStateVars} end
-
+include("plasticity_models/YieldSurfaces.jl")
+include("plasticity_models/HardeningModels.jl")
+include("plasticity_models/LinearElastoPlasticity.jl")
