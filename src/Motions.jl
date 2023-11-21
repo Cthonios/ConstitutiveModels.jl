@@ -1,6 +1,9 @@
 abstract type AbstractMotion end
 abstract type SimpleMotion <: AbstractMotion end
 
+function deformation_gradient end
+function motion_objective end
+
 struct IsochoricUniaxialStress <: SimpleMotion
 end
 

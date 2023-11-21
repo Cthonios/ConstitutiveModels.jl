@@ -13,7 +13,6 @@ export NeoHookean
 export cauchy_stress
 export energy
 export pk1_stress
-# export pk1_stress_and_property_adjoints
 export pk2_stress
 
 # motions
@@ -36,6 +35,20 @@ using NonlinearSolve
 using StaticArrays
 using Tensors
 using Unitful
+
+# for docs
+@template (FUNCTIONS, METHODS, MACROS) = 
+"""
+$(TYPEDSIGNATURES)
+$(DOCSTRING)
+$(METHODLIST)
+"""
+
+@template (TYPES) = 
+"""
+$(TYPEDFIELDS)
+$(DOCSTRING)
+"""
 
 # some top level abstract types
 abstract type ConstitutiveModel{NProps, NStateVars} end
