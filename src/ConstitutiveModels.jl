@@ -8,6 +8,7 @@ export number_of_state_variables
 
 export MechanicalModel
 export HyperelasticModel
+export LinearElastic
 export NeoHookean
 
 export cauchy_stress
@@ -57,7 +58,7 @@ number_of_properties(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NSt
 number_of_state_variables(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = NStateVars
 Base.size(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = (NProps, NStateVars)
 
-include("Uitls.jl")
+include("Utils.jl")
 include("MechanicalModels.jl")
 include("Motions.jl")
 

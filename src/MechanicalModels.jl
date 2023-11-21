@@ -1,4 +1,5 @@
 abstract type MechanicalModel{NProps, NStateVars} <: ConstitutiveModel{NProps, NStateVars} end
+
 abstract type HyperelasticModel{NProps, NStateVars} <: MechanicalModel{NProps, NStateVars} end
 
 function Base.zeros(type::Type, mod::Mod) where Mod <: HyperelasticModel
@@ -14,4 +15,8 @@ update_state(::Mod, state::SVector{NStateVars, <:Number}) where {Mod <: Hyperela
 state
 
 # modles to include
-include("mechanical_models/NeoHookean.jl")
+include("hyperelastic_models/LinearElastic.jl")
+include("hyperelastic_models/NeoHookean.jl")
+
+abstract type PlasticityModel{NProps, NStateVars} <: MechanicalModel{NProps, NStateVars} end
+

@@ -76,9 +76,9 @@ end
 
 function form_deformation_gradient(
   ::Type{UniaxialStressDisplacementControl},
-  λ::T, x::SVector{8, T}
-) where T <: Number
-  F = Tensor{2, 3, Float64, 9}((
+  λ::T, x::V
+) where {T <: Number, V <: AbstractArray}
+  F = Tensor{2, 3, eltype(x), 9}((
     λ,    x[8], x[7],
     x[5], x[1], x[6],
     x[4], x[3], x[2]
@@ -107,7 +107,7 @@ function deformation_gradient(
   x0      = SVector{8, T}([1., 1., 0., 0., 0., 0., 0., 0.])
   f       = (u, p) -> motion_objective(motion, model, props, u, p)
   problem = NonlinearProblem(f, x0, SVector{1, Float64}([λ]))
-  sol     = solve(problem, SimpleNonlinearSolve.SimpleNewtonRaphson(; autodiff=false))
+  sol     = solve(problem, NewtonRaphson())
   F       = form_deformation_gradient(motion, λ, sol.u)
   return F
 end

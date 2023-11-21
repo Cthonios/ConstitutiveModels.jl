@@ -35,10 +35,31 @@ function ConstitutiveModels.cauchy_stress(
          V <: AbstractArray{<:Number, 1}}
   
   # annoying for right now..., maybe write a better wrapper
-  J = det(F)
-  P = autodiff(Reverse, energy, Active, model, props, Active(F))[1][3]
-  return J^-1 * dot(P, F')
+  if typeof(model) <: ConstitutiveModels.LinearElastic
+    I = one(SymmetricTensor{2, 3, eltype(F), 6})
+    ∇u = F - I
+    ε = 0.5 * (∇u + ∇u')
+    σ = autodiff(Reverse, ConstitutiveModels.energy_enzyme_specialization, Active, model, props, Active(ε))[1][3]
+    return σ
+  else
+    J = det(F)
+    P = autodiff(Reverse, energy, Active, model, props, Active(F))[1][3]
+    return J^-1 * symmetric(dot(P, F'))
+  end
 end
+
+# function ConstitutiveModels.cauchy_stress(
+#   ::Enzyme.ReverseMode{false},
+#   model::ConstitutiveModels.LinearElastic, props::V, F::Tensor{2, 3, <:Number, 9}
+# ) where {V <: AbstractArray}
+
+#   @show "here"
+#   I = one(SymmetricTensor{2, 3, eltype(F), 6})
+#   ∇u = F - I
+#   ε  = 0.5 * symmetric(∇u + ∇u')
+#   σ = autodiff(Reverse, energy, ACtive, model, props, Active(ε))[1][3]
+#   return σ
+# end
 
 # function ConstitutiveModels.strain_energy_density_and_property_adjoints(
 #   model::M, F::T, props::V

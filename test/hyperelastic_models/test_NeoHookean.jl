@@ -16,3 +16,17 @@ end
   λs = LinRange(0.5, 4., 100)
   ad_test(model, props, UniaxialStrain, λs)
 end
+
+@testset ExtendedTestSet "NeoHookean - simple shear" begin
+  model, props = NeoHookean(inputs_NeoHookean)
+  @test props == [10.0, 1.0]
+  λs = LinRange(-0.5, 0.5, 100)
+  ad_test(model, props, SimpleShear, λs)
+end
+
+@testset ExtendedTestSet "NeoHookean - uniaxial stress, displacement controlled" begin
+  model, props = NeoHookean(inputs_NeoHookean)
+  @test props == [10.0, 1.0]
+  λs = LinRange(0.5, 4.0, 100)
+  ad_test(model, props, UniaxialStressDisplacementControl, λs)
+end
