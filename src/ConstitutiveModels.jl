@@ -24,18 +24,11 @@ export UniaxialStrain
 export UniaxialStressDisplacementControl
 export deformation_gradient
 
-# states
-# export MaterialState
-# export MechanicalState
-# export update_deformation_gradients
-# export update!
-
 # dependencies
 using DocStringExtensions
 using NonlinearSolve
 using StaticArrays
 using Tensors
-using Unitful
 
 # for docs
 @template (FUNCTIONS, METHODS, MACROS) = 
@@ -58,10 +51,7 @@ number_of_properties(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NSt
 number_of_state_variables(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = NStateVars
 Base.size(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = (NProps, NStateVars)
 
-include("Utils.jl")
 include("MechanicalModels.jl")
 include("Motions.jl")
-
-# include("MaterialStates.jl")
 
 end # module
