@@ -11,10 +11,9 @@ export HyperelasticModel
 export LinearElastic
 export NeoHookean
 
-export cauchy_stress
-export energy
-export pk1_stress
-export pk2_stress
+export cauchy_stress!
+export energy!
+export pk1_stress!
 
 # motions
 export IsochoricUniaxialStress
@@ -50,6 +49,14 @@ function initialize_state end
 number_of_properties(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = NProps
 number_of_state_variables(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = NStateVars
 Base.size(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = (NProps, NStateVars)
+
+# some math helpers to be consistent with Tensors.jl
+tdot(F::Matrix{T}) where T <: Number = tr(F' * F)
+tdot(F::MMatrix{3, 3, T, 9}) where T <: Number = tr(F' * F)
+tdot(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F' * F)
+dott(F::Matrix{T}) where T <: Number = tr(F * F')
+dott(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F * F')
+dott(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F * F')
 
 include("MechanicalModels.jl")
 include("Motions.jl")
