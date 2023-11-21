@@ -25,10 +25,10 @@ export UniaxialStressDisplacementControl
 export deformation_gradient
 
 # states
-export MaterialState
-export MechanicalState
+# export MaterialState
+# export MechanicalState
 # export update_deformation_gradients
-export update!
+# export update!
 
 # dependencies
 using DocStringExtensions
@@ -62,6 +62,6 @@ include("Utils.jl")
 include("MechanicalModels.jl")
 include("Motions.jl")
 
-include("MaterialStates.jl")
+# include("MaterialStates.jl")
 
 end # module
