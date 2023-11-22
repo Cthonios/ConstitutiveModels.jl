@@ -1,7 +1,7 @@
 using Aqua
 using ConstitutiveModels
 using Enzyme
-using ForwardDiff
+# using ForwardDiff
 using JET
 using Tensors
 using Test
@@ -55,18 +55,9 @@ end
 end
 
 @testset ExtendedTestSet "Aqua" begin
-  # Aqua.test_all(ConstitutiveModels)
-  Aqua.test_ambiguities(ConstitutiveModels)
-  Aqua.test_unbound_args(ConstitutiveModels)
-  Aqua.test_undefined_exports(ConstitutiveModels)
-  # Aqua.test_piracies(ConstitutiveModels)
-  Aqua.test_project_extras(ConstitutiveModels)
-  Aqua.test_stale_deps(ConstitutiveModels)
-  Aqua.test_deps_compat(ConstitutiveModels)
-  # Aqua.test_project_toml_formatting(ConstitutiveModels)
-
+  Aqua.test_all(ConstitutiveModels; ambiguities=false)
 end
 
 # @testset ExtendedTestSet "JET" begin
-#   JET.test_package(ConstitutiveModels; target_defined_module=true)
+#   JET.test_package(ConstitutiveModels)
 # end

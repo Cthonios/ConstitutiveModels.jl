@@ -22,7 +22,7 @@ abstract type HyperelasticModel{NProps, NStateVars} <: MechanicalModel{NProps, N
 
 function initialize_state(model::Mod; type::Type = SVector) where Mod <: HyperelasticModel
   if type <: Vector
-    state = zeros(T, 0)
+    state = zeros(Float64, 0)
   elseif type <: MVector
     state = zeros(MVector{number_of_state_variables(model), Float64})
   elseif type <: SVector
