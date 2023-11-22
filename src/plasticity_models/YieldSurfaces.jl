@@ -18,7 +18,8 @@ function J2YieldSurface(inputs::D) where D <: Dict
   yield_stress = inputs["yield stress"]
 
   if "isotropic hardening model" in keys(inputs)
-    error("Not implented yet")
+    model_name = Symbol(inputs["isotropic hardening model"])
+    @show hardening_model, hardening_props, hardening_state = @eval $model_name($inputs)
   else
     hardening_model, hardening_props, hardening_state = NoIsotropicHardening(inputs)
   end
@@ -36,7 +37,6 @@ function effective_stress(::J2YieldSurface, σ::M) where M <: AbstractArray{<:Nu
 end
 
 function yield_surface(model::J2YieldSurface, props::V1, σ::V2, α_old) where {V1 <: AbstractArray, V2 <: AbstractArray{<:Number, 2}}
-  # σ_y = yield_stress(model, props)
   σ_eff = effective_stress(model, σ)
   surf_radius = radius(model.hardening_model, props, α_old)
   f = σ_eff - surf_radius
@@ -45,11 +45,6 @@ end
 
 # TODO maybe a better interface?
 function update(model::J2YieldSurface, props::V1, μ, σ::V2, α_old) where {V1 <: AbstractArray, V2 <: AbstractArray}
-  f = yield_surface(model, props, σ, α_old)
-  if f <= 0.0
-    Δγ = 0.0
-  else
-    Δγ = f / (2. * μ)
-  end
+  Δγ = update(model.hardening_model, model, props, μ, σ, α_old)
   return Δγ
 end

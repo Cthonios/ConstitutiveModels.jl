@@ -8,7 +8,8 @@ function LinearElastoPlasticity(inputs::D) where D <: Dict
   yield_surface, yield_props, yield_state           = J2YieldSurface(inputs)
   props = vcat(elastic_props, yield_props)
   state = vcat(elastic_state, yield_state)
-  return LinearElastoPlasticity{3, typeof(yield_surface)}(
+  return LinearElastoPlasticity{number_of_properties(elastic_model) + number_of_properties(yield_surface), 
+                                typeof(yield_surface)}(
     elastic_model, yield_surface
   ), props, state
 end
@@ -55,7 +56,6 @@ function cauchy_stress(model::LinearElastoPlasticity, props, F, state)
 end
 
 function pk1_stress(model::LinearElastoPlasticity, props, F, state)
-  # cauchy_stress(model.elastic_model, props, F, state)
   J = det(F)
   σ, state = cauchy_stress(model, props, F, state)
   P = J * dot(σ, inv(F)')
