@@ -4,26 +4,30 @@ end
 function NeoHookean(inputs::D) where D <: Dict
   @assert "bulk modulus" in keys(inputs)
   @assert "shear modulus" in keys(inputs)
-  # @assert inputs["shear modulus"] > 0.0
-
   bulk_modulus  = inputs["bulk modulus"]
   shear_modulus = inputs["shear modulus"]
 
-  # TODO maybe make this a helper method
-  if typeof(shear_modulus) <: Quantity
-    @assert ustrip(shear_modulus) > 0.0
-  else
-    @assert shear_modulus > 0.0
-  end
-
-  props = @SVector [
-    bulk_modulus,
+  model = NeoHookean()
+  props = initialize_properties(model, [
+    bulk_modulus, 
     shear_modulus
-  ]
-  return NeoHookean(), props
+  ])
+    # TODO add prop checks
+  state = initialize_state(model) # make type parametric TODO
+  
+  return model, props, state
 end
  
-function energy(::NeoHookean, props::V, F::T) where {V <: AbstractArray{<:Number, 1}, T <: Tensor{2, 3, <:Number}}
+# pure method for energy
+function energy(
+  ::NeoHookean, 
+  props::V1, 
+  F::M, 
+  state::V2
+) where {V1 <: AbstractArray{<:Number, 1}, 
+         M  <: AbstractArray{<:Number, 2}, 
+         V2 <: AbstractArray{<:Number, 1}}
+
   K, G    = props[1], props[2]
   J       = det(F)
   I_1_bar = tr(J^(-2. / 3.) * tdot(F))
@@ -32,16 +36,15 @@ function energy(::NeoHookean, props::V, F::T) where {V <: AbstractArray{<:Number
   return W_vol + W_dev
 end
 
-function energy(::NeoHookean, props::V, C::T) where {V <: AbstractArray{<:Number, 1}, T <: SymmetricTensor{2, 3, <:Number}}
-  K, G    = props[1], props[2]
-  I_3     = det(C)
-  I_1_bar = tr(I_3^(-1. / 3.) * C)
-  W_vol   = 0.5 * K * (0.5 * (I_3 - 1) - 0.5 * log(I_3))
-  W_dev   = 0.5 * G * (I_1_bar - 3.)
-  return W_vol + W_dev
-end
+function pk1_stress(
+  ::NeoHookean, 
+  props::V1, 
+  F::M, 
+  state::V2
+) where {V1 <: AbstractArray{<:Number, 1}, 
+         M  <: AbstractArray{<:Number, 2},
+         V2 <: AbstractArray{<:Number, 1}}
 
-function pk1_stress(::NeoHookean, props::V, F::T) where {V <: AbstractArray{<:Number, 1}, T <: Tensor{2, 3, <:Number, 9}}
   K, G    = props[1], props[2]
   J       = det(F)
   J_23    = J^(-2. / 3.)
@@ -52,18 +55,15 @@ function pk1_stress(::NeoHookean, props::V, F::T) where {V <: AbstractArray{<:Nu
   return P
 end
 
-function pk2_stress(::NeoHookean, props::V, C::T) where {V <: AbstractArray{<:Number, 1}, T <: SymmetricTensor{2, 3, <:Number, 6}}
-  K, G     = props[1], props[2]
-  I_1, I_3 = tr(C), det(C)
-  J_23     = I_3^(-1. / 3.)
-  C_inv    = inv(C)
-  I        = one(SymmetricTensor{2, 3, eltype(C), 6})
-  S        = 0.5 * K * (I_3 - 1.) * C_inv + 
-             G * J_23 * (I - (1. / 3.) * I_1 * C_inv)
-  return S
-end
+function cauchy_stress(
+  ::NeoHookean, 
+  props::V1, 
+  F::M, 
+  state::V2
+) where {V1 <: AbstractArray{<:Number, 1}, 
+         M  <: AbstractArray{<:Number, 2},
+         V2 <: AbstractArray{<:Number, 1}}
 
-function cauchy_stress(::NeoHookean, props::V, F::T) where {V <: AbstractArray{<:Number, 1}, T <: Tensor{2, 3, <:Number, 9}}
   K, G = props[1], props[2]
   J    = det(F)
   J_53 = J^(-5. / 3.)

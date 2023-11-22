@@ -9,12 +9,12 @@ export number_of_state_variables
 export MechanicalModel
 export HyperelasticModel
 export LinearElastic
+export LinearElastoPlasticity
 export NeoHookean
 
 export cauchy_stress
 export energy
 export pk1_stress
-export pk2_stress
 
 # motions
 export IsochoricUniaxialStress
@@ -24,18 +24,13 @@ export UniaxialStrain
 export UniaxialStressDisplacementControl
 export deformation_gradient
 
-# states
-# export MaterialState
-# export MechanicalState
-# export update_deformation_gradients
-# export update!
-
 # dependencies
 using DocStringExtensions
+using LinearSolve
 using NonlinearSolve
 using StaticArrays
 using Tensors
-using Unitful
+import Tensors: tdot, dott
 
 # for docs
 @template (FUNCTIONS, METHODS, MACROS) = 
@@ -58,10 +53,15 @@ number_of_properties(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NSt
 number_of_state_variables(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = NStateVars
 Base.size(::ConstitutiveModel{NProps, NStateVars}) where {NProps, NStateVars} = (NProps, NStateVars)
 
-include("Utils.jl")
+# some math helpers to be consistent with Tensors.jl
+# Tensors.tdot(F::Matrix{T}) where T <: Number = tr(F' * F)
+# Tensors.tdot(F::MMatrix{3, 3, T, 9}) where T <: Number = tr(F' * F)
+# Tensors.tdot(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F' * F)
+# Tensors.dott(F::Matrix{T}) where T <: Number = tr(F * F')
+# Tensors.dott(F::MMatrix{3, 3, T, 9}) where T <: Number = tr(F * F')
+# Tensors.dott(F::SMatrix{3, 3, T, 9}) where T <: Number = tr(F * F')
+
 include("MechanicalModels.jl")
 include("Motions.jl")
-
-# include("MaterialStates.jl")
 
 end # module
