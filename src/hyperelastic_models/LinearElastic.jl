@@ -59,6 +59,21 @@ function cauchy_stress(
   return σ
 end
 
+function cauchy_stress(
+  model::LinearElastic, 
+  props::V1, 
+  ε::SymmetricTensor{2, 3, <:Number, 6}, 
+  state::V2
+) where {V1 <: AbstractArray{<:Number, 1},
+         V2 <: AbstractArray{<:Number, 1}}
+
+  λ, μ = props[1], props[2]
+  I = one(SymmetricTensor{2, 3, eltype(ε), 6})
+  trε  = tr(ε)
+  σ = λ * trε * I + 2. * μ * ε
+  return σ
+end
+
 function pk1_stress(
   model::LinearElastic, 
   props::V1, 

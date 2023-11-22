@@ -9,6 +9,7 @@ export number_of_state_variables
 export MechanicalModel
 export HyperelasticModel
 export LinearElastic
+export LinearElastoPlasticity
 export NeoHookean
 
 export cauchy_stress
@@ -25,6 +26,7 @@ export deformation_gradient
 
 # dependencies
 using DocStringExtensions
+using LinearSolve
 using NonlinearSolve
 using StaticArrays
 using Tensors

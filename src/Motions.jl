@@ -154,6 +154,7 @@ function motion_objective(
   return Pvec
 end
 
+# TODO add solver options
 """
 """
 function deformation_gradient(
@@ -164,7 +165,7 @@ function deformation_gradient(
   # system seems singular for identity so this is a catch for now
   if λ ≈ 1.
     if type <: Tensor
-      return one(SymmetricTensor{2, 3, T, 6})
+      return one(Tensor{2, 3, T, 9})
     elseif type <: MMatrix
       return MMatrix{3, 3, T, 9}((1., 0., 0., 0., 1., 0., 0., 0., 1.))
     elseif type <: SMatrix
@@ -174,10 +175,10 @@ function deformation_gradient(
     end
   end
 
-  x0      = SVector{8, T}([1., 1., 0., 0., 0., 0., 0., 0.])
+  x0      = MVector{8, T}([1., 1., 0., 0., 0., 0., 0., 0.])
   f       = (u, p) -> motion_objective(motion, model, props, state, Tensor, u, p)
   problem = NonlinearProblem(f, x0, SVector{1, Float64}([λ]))
-  sol     = solve(problem, NewtonRaphson())
+  sol     = solve(problem, NewtonRaphson(; linsolve=SimpleGMRES()); abstol=1e-8, reltol=1e-8, verbose=true)
   F       = form_deformation_gradient(motion, λ, sol.u, type)
   return F
 end

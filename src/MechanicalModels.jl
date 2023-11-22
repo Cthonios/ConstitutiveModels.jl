@@ -20,8 +20,6 @@ end
 # hyperelasticity
 abstract type HyperelasticModel{NProps, NStateVars} <: MechanicalModel{NProps, NStateVars} end
 
-
-
 function initialize_state(model::Mod; type::Type = SVector) where Mod <: HyperelasticModel
   if type <: Vector
     state = zeros(T, 0)
@@ -41,7 +39,8 @@ end
 include("hyperelastic_models/LinearElastic.jl")
 include("hyperelastic_models/NeoHookean.jl")
 
-# abstract type PlasticityModel{NProps, NStateVars} <: MechanicalModel{NProps, NStateVars} end
-# include("plasticity_models/YieldSurfaces.jl")
-# include("plasticity_models/HardeningModels.jl")
-# include("plasticity_models/LinearElastoPlasticity.jl")
+abstract type PlasticityModel{NProps, NStateVars} <: MechanicalModel{NProps, NStateVars} end
+elastic_properties(props::V) where V <: AbstractArray{<:Number, 1} = @views SVector{2, eltype(props)}(props[1:2])
+include("plasticity_models/HardeningModels.jl")
+include("plasticity_models/YieldSurfaces.jl")
+include("plasticity_models/LinearElastoPlasticity.jl")
