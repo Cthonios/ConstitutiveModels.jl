@@ -10,7 +10,7 @@ makedocs(;
     sitename="ConstitutiveModels.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://cmhamel.github.io/ConstitutiveModels.jl",
+        canonical="https://cthonios.github.io/ConstitutiveModels.jl",
         edit_link="main",
         assets=String[],
     ),
@@ -20,6 +20,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/cmhamel/ConstitutiveModels.jl",
+    repo="github.com/Cthonios/ConstitutiveModels.jl",
     devbranch="main",
 )
