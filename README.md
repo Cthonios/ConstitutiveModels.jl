@@ -5,7 +5,7 @@ ConstitutiveModels.jl aims to offer a general package for efficient implementati
 
 Example LinearElastoPlasticity model
 
-julia```
+```
 using ConstitutiveModels
 using Plots
 using Tensors
