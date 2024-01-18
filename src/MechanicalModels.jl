@@ -50,6 +50,6 @@ elastic_properties(props::V) where V <: AbstractArray{<:Number, 1} = @views SVec
 abstract type HardeningModel{NProps, NStateVars} <: PlasticityModel{NProps, NStateVars} end
 
 
-include("plasticity_models/YieldSurfaces.jl")
-include("plasticity_models/HardeningModels.jl")
-include("plasticity_models/LinearElastoPlasticity.jl")
+# include("plasticity_models/YieldSurfaces.jl")
+# include("plasticity_models/HardeningModels.jl")
+# include("plasticity_models/LinearElastoPlasticity.jl")

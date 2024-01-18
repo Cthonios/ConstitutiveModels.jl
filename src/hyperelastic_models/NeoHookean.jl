@@ -1,11 +1,24 @@
 struct NeoHookean <: HyperelasticModel{2, 0}
 end
 
-function NeoHookean(inputs::D) where D <: Dict
-  @assert "bulk modulus" in keys(inputs)
-  @assert "shear modulus" in keys(inputs)
+function read_properties(inputs::D) where D <: Dict{String, Any}
   bulk_modulus  = inputs["bulk modulus"]
   shear_modulus = inputs["shear modulus"]
+  return bulk_modulus, shear_modulus
+end
+
+function read_properties(inputs::D) where D <: Dict{Symbol, Any}
+  bulk_modulus  = inputs[Symbol("bulk modulus")]
+  shear_modulus = inputs[Symbol("shear modulus")]
+  return bulk_modulus, shear_modulus
+end
+
+function NeoHookean(inputs::D) where D <: Dict
+  # @assert "bulk modulus" in keys(inputs)
+  # @assert "shear modulus" in keys(inputs)
+  # bulk_modulus  = inputs["bulk modulus"]
+  # shear_modulus = inputs["shear modulus"]
+  bulk_modulus, shear_modulus = read_properties(inputs)
 
   model = NeoHookean()
   props = initialize_properties(model, [
