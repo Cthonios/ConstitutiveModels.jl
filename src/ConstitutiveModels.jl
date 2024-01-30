@@ -12,6 +12,7 @@ export pk1_stress
 
 using DocStringExtensions
 using ForwardDiff
+using MuladdMacro
 using StaticArrays
 using Tensors
 
@@ -38,6 +39,30 @@ end
 function initialize_state(model, ::Type{T}) where T <: Vector
   return zeros(Float64, num_state_vars(model))
 end
+
+# function polar_decomposition(F::Tensor{2, 3, T, 9}) where T <: Number
+#   C = tdot(F)
+#   result = eigen(C)
+#   U = zero(SymmetricTensor{2, 3, T, 6})
+#   for n in 1:3
+#     v = result.vectors[:, n]
+#     U = U + sqrt(result.values[n]) * otimes(v, v)
+#   end
+#   R = dot(F, inv(U))
+#   return R, U
+# end 
+
+# # function log_strain(F::Tensor{2, 3, T, 9}) where T <: Number
+# function log_strain(F)
+#   C = tdot(F)
+#   result = eigen(C)
+#   E = zero(SymmetricTensor{2, 3, eltype(F), 6})
+#   for n in 1:3
+#     v = result.vectors[:, n]
+#     E = E + 0.5 * log(result.values[n]) * otimes(v, v)
+#   end
+#   return E
+# end
 
 struct ADMode
 end
@@ -80,6 +105,7 @@ function pk1_tangent(::Type{NestedADMode}, model, props, F::Tensor{2, 3, T, 9}) 
   Tensors.hessian(x -> helmholtz_free_energy(model, props, x), F)
 end
 
+include("Eigen.jl")
 include("solvers/NewtonSolver.jl")
 include("models/MechanicalModels.jl")
 include("motions/Motions.jl")
