@@ -1,12 +1,12 @@
 name = "ConstitutiveModels"
 uuid = "fc6ee7eb-129a-416f-804b-d7271ece6a3a"
 authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
-NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Tensors = "48a634ad-e948-5137-8d70-aa71f2a747f4"
 
@@ -20,9 +20,9 @@ ConstitutiveModelsEnzymeExt = ["Enzyme"]
 Aqua = "0.8"
 DocStringExtensions = "0.9"
 Enzyme = "0.11"
+ForwardDiff = "0.10"
 JET = "0.8"
-LinearSolve = "2"
-NonlinearSolve = "2"
+MuladdMacro = "0.2"
 StaticArrays = "1"
 Tensors = "1"
 Test = "1"

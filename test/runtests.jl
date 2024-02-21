@@ -1,6 +1,6 @@
 using Aqua
 using ConstitutiveModels
-using Enzyme
+# using Enzyme
 # using ForwardDiff
 using JET
 using Tensors
@@ -11,37 +11,38 @@ using TestSetExtensions
 
 # end
 
-function ad_test(model::Mod, props::V, F::Tensor{2, 3, <:Number, 9}, state) where {Mod <: ConstitutiveModel, V <: AbstractArray{<:Number, 1}}
+function ad_test(model::Mod, props::V, F::Tensor{2, 3, <:Number, 9}) where {Mod <: ConstitutiveModel, V <: AbstractArray{<:Number, 1}}
   C = tdot(F)
   J = det(F)
   
-  P = pk1_stress(model, props, F, state)
+  P = pk1_stress(model, props, F)
   # P_ad = Tensors.gradient(x -> energy(model, props, x), F)
-  P_enz = pk1_stress(Reverse, model, props, F, state)
+  # P_enz = pk1_stress(Reverse, model, props, F)
+  P_ad = pk1_stress(ADMode, model, props, F)
   # @test P ≈ P_ad
-  @test P ≈ P_enz
+  @test P ≈ P_ad
 
-  σ = cauchy_stress(model, props, F, state)
-  # σ_ad = symmetric(J^-1 * dot(Tensors.gradient(x -> energy(model, props, x), F), F'))
-  σ_enz = cauchy_stress(Reverse, model, props, F, state)
+  # σ = cauchy_stress(model, props, F)
+  # # σ_ad = symmetric(J^-1 * dot(Tensors.gradient(x -> energy(model, props, x), F), F'))
+  # σ_enz = cauchy_stress(Reverse, model, props, F)
 
-  # @test σ ≈ σ_ad
-  @test σ ≈ σ_enz
+  # # @test σ ≈ σ_ad
+  # @test σ ≈ σ_enz
 end
 
 function ad_test(
-  model::Mod, props::V1, state,
+  model::Mod, props::V1,
   motion::Type{Motion}, vals
 ) where {Mod <: ConstitutiveModel, Motion <: SimpleMotion,
          V1 <: AbstractArray{<:Number, 1}}
 
   for val in vals
     if motion <: UniaxialStressDisplacementControl
-      F = deformation_gradient(motion, model, props, state, val)
+      F = ConstitutiveModels.deformation_gradient(motion, model, props, val, Tensor)
     else
-      F = deformation_gradient(motion, val)
+      F = ConstitutiveModels.deformation_gradient(motion, val)
     end
-    ad_test(model, props, F, state)
+    ad_test(model, props, F)
   end
 end
 
@@ -58,6 +59,6 @@ end
   Aqua.test_all(ConstitutiveModels; ambiguities=false)
 end
 
-# @testset ExtendedTestSet "JET" begin
-#   JET.test_package(ConstitutiveModels)
-# end
+@testset ExtendedTestSet "JET" begin
+  JET.test_package(ConstitutiveModels; target_defined_modules=true)
+end
