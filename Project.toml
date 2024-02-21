@@ -1,7 +1,7 @@
 name = "ConstitutiveModels"
 uuid = "fc6ee7eb-129a-416f-804b-d7271ece6a3a"
 authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
@@ -22,6 +22,7 @@ DocStringExtensions = "0.9"
 Enzyme = "0.11"
 ForwardDiff = "0.10"
 JET = "0.8"
+MuladdMacro = "0.2"
 StaticArrays = "1"
 Tensors = "1"
 Test = "1"

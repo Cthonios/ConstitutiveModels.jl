@@ -9,6 +9,7 @@ export cauchy_stress
 export deformation_gradient
 export helmholtz_free_energy
 export pk1_stress
+export setup
 
 using DocStringExtensions
 using ForwardDiff
@@ -38,6 +39,12 @@ end
 
 function initialize_state(model, ::Type{T}) where T <: Vector
   return zeros(Float64, num_state_vars(model))
+end
+
+function setup(model, inputs; type=SVector)
+  props = initialize_props(model, inputs, type)
+  state = initialize_state(model, type)
+  return props, state
 end
 
 # function polar_decomposition(F::Tensor{2, 3, T, 9}) where T <: Number

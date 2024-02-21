@@ -1,19 +1,22 @@
 struct NeoHookean <: HyperelasticModel{2, 0}
 end
 
-function NeoHookean(inputs::D, type::Type{ArrType}) where {ArrType, D <: Dict{String, <:Number}}
+function initialize_props(::NeoHookean, inputs::D, type::Type{ArrType}) where {ArrType, D <: Dict{String, Any}}
   K = inputs["bulk modulus"]
   G = inputs["shear modulus"]
-
-  model = NeoHookean()
-  props = initialize_props((K, G), type)
-  state = initialize_state(model, type)
-  return model, props, state
+  return initialize_props((K, G), type)
 end
 
-function helmholtz_free_energy(
+function initialize_props(::NeoHookean, inputs::D, type::Type{ArrType}) where {ArrType, D <: Dict{Symbol, Any}}
+  K = inputs[Symbol("bulk modulus")]
+  G = inputs[Symbol("shear modulus")]
+  return initialize_props((K, G), type)
+end
+
+# function helmholtz_free_energy(
+function energy(
   ::NeoHookean,
-  props::V1, F::M
+  props::V1, F::M, _
 ) where {
   V1 <: AbstractArray{<:Number, 1},
   M  <: AbstractArray{<:Number, 2},        
@@ -30,7 +33,7 @@ end
 
 function pk1_stress(
   ::NeoHookean, 
-  props::V1, F::M
+  props::V1, F::M, _
 ) where {
   V1 <: AbstractArray{<:Number, 1}, 
   M  <: AbstractArray{<:Number, 2}
