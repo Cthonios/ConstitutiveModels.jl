@@ -4,6 +4,7 @@ authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
 version = "0.1.1"
 
 [deps]
+DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
@@ -18,6 +19,7 @@ ConstitutiveModelsEnzymeExt = ["Enzyme"]
 
 [compat]
 Aqua = "0.8"
+DiffResults = "1"
 DocStringExtensions = "0.9"
 Enzyme = "0.11"
 ForwardDiff = "0.10"
