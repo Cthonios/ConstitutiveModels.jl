@@ -5,9 +5,9 @@ function heat_flux end
 struct FouriersLaw <: ThermalModel{1, 0}
 end
 
-function initialize_props(::FouriersLaw, inputs::D, type::Type{ArrType}) where {ArrType, D <: Dict{Symbol, Any}}
+function initialize_props(::FouriersLaw, inputs::D) where {D <: Dict{Symbol, Any}}
   k = inputs[Symbol("thermal conductivity")]
-  return initialize_props((k,), type)
+  return initialize_props((k,))
 end
 
 function heat_flux(::FouriersLaw, props, Δt, T, ∇T, state_old)

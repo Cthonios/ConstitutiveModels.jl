@@ -1,7 +1,7 @@
 name = "ConstitutiveModels"
 uuid = "fc6ee7eb-129a-416f-804b-d7271ece6a3a"
 authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"

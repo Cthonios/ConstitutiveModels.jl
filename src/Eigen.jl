@@ -225,7 +225,7 @@ end
   return evals, evecs
 end
 
-@inline function log_sqrt(A::SymmetricTensor{2, 3, T, 6}) where T <: Number
+@inline function log_strain(A::SymmetricTensor{2, 3, T, 6}) where T <: Number
   evals, evecs = eigen_sym33_unit(A)
   log_λs = diagm(SymmetricTensor{2, 3, T, 6}, Tensors._map(log, evals))
   return dot(evecs, dot(log_λs, evecs')) |> symmetric

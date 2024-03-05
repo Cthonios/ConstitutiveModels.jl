@@ -34,26 +34,40 @@ function pk1_stress_and_material_tangent end
 
 function cauchy_stress end
 
-function initialize_props(props, ::Type{T}) where T <: Union{MVector, SVector}
-  return T(props)
+function cauchy_stress(model, props, Δt, F, θ, state_old)
+  P, state_new = pk1_stress(model, props, Δt, F, θ, state_old)
+  σ = (1. / det(F)) * P * F'
+  return σ, state_new
 end
 
-function initialize_props(props::NTuple{N, Float64}, ::Type{T}) where {N, T <: Vector}
+# function initialize_props(props) where T <: Union{MVector, SVector}
+#   return T(props)
+# end
+
+function initialize_props(model, inputs::Dict{String})
+  new_inputs = Dict{Symbol, Any}()
+  for (key, val) in inputs
+    new_inputs[Symbol(key)] = val
+  end
+  return initialize_props(model, new_inputs)
+end
+
+function initialize_props(props::NTuple{N, Float64}) where {N}
   return collect(props)
 end
 
-function initialize_state(model, ::Type{T}) where T <: Union{MVector, SVector}
+function initialize_state(model)
   NSV = num_state_vars(model)
-  return zero(T{NSV, Float64})
+  return zero(SVector{NSV, Float64})
 end
 
-function initialize_state(model, ::Type{T}) where T <: Vector
-  return zeros(Float64, num_state_vars(model))
-end
+# function initialize_state(model)
+#   return zeros(Float64, num_state_vars(model))
+# end
 
-function setup(model, inputs; type=SVector)
-  props = initialize_props(model, inputs, type)
-  state = initialize_state(model, type)
+function setup(model, inputs)
+  props = initialize_props(model, inputs)
+  state = initialize_state(model)
   return props, state
 end
 

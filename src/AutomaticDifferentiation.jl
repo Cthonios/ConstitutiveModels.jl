@@ -1,7 +1,7 @@
 # For AD w.r.t. to second order tensors, i.e. the deformation gradient
 function Tensors._extract_gradient(v::Tuple{ForwardDiff.Dual, SVector}, t::Tensor{2, dim}) where {dim}
   P = Tensors._extract_gradient(v[1], t)
-  return P, v[2]
+  return P, ForwardDiff.value.(v[2])
 end
 
 # For nested AD w.r.t to second order tensors
@@ -10,7 +10,7 @@ function Tensors._extract_gradient(
   t::Tensor{2, dim}
 ) where {dim}
   A = Tensors._extract_gradient(v[1], t)
-  return A, v[2]
+  return A, ForwardDiff.value.(v[2])
 end
 
 # This catches the case where AD can't trace the temperature
@@ -33,6 +33,9 @@ end
 # fall back methods
 # this way only the helmholtz_free_energy method needs to be implemented
 function pk1_stress(model, props, Δt, F, θ, state_old)
+  # P, state_new = Tensors.gradient(z -> helmholtz_free_energy(model, props, Δt, z, θ, state_old), F)
+  # return P, state_new
+
   P, state_new = Tensors.gradient(z -> helmholtz_free_energy(model, props, Δt, z, θ, state_old), F)
   return P, state_new
 end

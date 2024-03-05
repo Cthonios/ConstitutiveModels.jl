@@ -63,6 +63,7 @@ function solve_hardening(f, g, x0)
     end
 
     K = g(x)
+
     Δx = -R / K
 
     x = x + Δx

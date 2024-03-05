@@ -1,16 +1,15 @@
 struct NeoHookean <: HyperelasticModel{2, 0}
 end
 
-function initialize_props(::NeoHookean, inputs::D, type::Type{ArrType}) where {ArrType, D <: Dict{String, Any}}
-  K = inputs["bulk modulus"]
-  G = inputs["shear modulus"]
-  return initialize_props((K, G), type)
+function NeoHookean(_)
+  return NeoHookean()
 end
 
-function initialize_props(::NeoHookean, inputs::D, type::Type{ArrType}) where {ArrType, D <: Dict{Symbol, Any}}
+function initialize_props(::NeoHookean, inputs::D) where {D <: Dict{Symbol, Any}}
   K = inputs[Symbol("bulk modulus")]
   G = inputs[Symbol("shear modulus")]
-  return initialize_props((K, G), type)
+  # return initialize_props((K, G), type)
+  return SVector{2, Float64}((K, G))
 end
 
 # function helmholtz_free_energy(
@@ -22,7 +21,6 @@ function helmholtz_free_energy(
   M  <: AbstractArray{<:Number, 2},
   V2 <: AbstractArray{<:Number, 1}        
 }
-
   K, G    = props[1], props[2]
   J       = det(F)
   I_1_bar = tr(J^(-2. / 3.) * tdot(F))
