@@ -1,12 +1,13 @@
 struct LinearIsotropicHardening <: IsotropicHardening{1, 0}
 end
 
-function LinearIsotropicHardening(inputs::D, type::Type{ArrType}) where {D <: Dict, ArrType}
-  H = inputs["hardening modulus"]
-  model = LinearIsotropicHardening()
-  props = initialize_props((H,), type)
-  state = initialize_state(model, type)
-  return model, props, state
+function LinearIsotropicHardening(_)
+  return LinearIsotropicHardening()
+end
+
+function initialize_props(::LinearIsotropicHardening, inputs::D) where D <: Dict{Symbol, Any}
+  H = inputs[Symbol("hardening modulus")]
+  return SVector{1, Float64}(H)
 end
 
 energy(::LinearIsotropicHardening, props::V, eqps) where V <: AbstractArray = props[1] * eqps + 0.5 * props[2] * eqps * eqps

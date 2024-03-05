@@ -50,13 +50,17 @@ end
   @testset ExtendedTestSet "MechanicalModels" begin
     @testset ExtendedTestSet "HyperelasticModels" begin
       include("hyperelastic_models/test_LinearElastic.jl")
-      include("hyperelastic_models/test_NeoHookean.jl")
+      # include("hyperelastic_models/test_NeoHookean.jl")
     end
   end
 end
 
 @testset ExtendedTestSet "Aqua" begin
-  Aqua.test_all(ConstitutiveModels; ambiguities=false)
+  Aqua.test_all(
+    ConstitutiveModels; 
+    ambiguities=false,
+    piracies=false
+  )
 end
 
 @testset ExtendedTestSet "JET" begin

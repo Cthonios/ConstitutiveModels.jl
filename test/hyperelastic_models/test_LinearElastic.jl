@@ -4,12 +4,16 @@ inputs_LinearElastic = Dict(
 )
 
 @testset ExtendedTestSet "LinearElastic - uniaxial strain unit test" begin
-  model, props, state = MechanicalModel(LinearElastic, inputs_LinearElastic)
+  model = MechanicalModel(LinearElastic, inputs_LinearElastic)
+  props = ConstitutiveModels.initialize_props(model, inputs_LinearElastic)
+  state_old = ConstitutiveModels.initialize_state(model)
+  Δt = 0.0
+  θ = 0.0
   λ_prop, μ = props[1], props[2]
   λs = LinRange(0.5, 1.5, 100)
   for λ in λs
     F = ConstitutiveModels.deformation_gradient(UniaxialStrain, λ)
-    σ = cauchy_stress(model, props, F)
+    σ, state_new = cauchy_stress(model, props, Δt, F, θ, state_old)
     ε_xx = λ - 1.
     σ_xx = λ_prop * ε_xx + 2. * μ * ε_xx
     σ_yy = λ_prop * ε_xx
@@ -26,12 +30,16 @@ inputs_LinearElastic = Dict(
 end
 
 @testset ExtendedTestSet "LinearElastic - simple shear unit test" begin
-  model, props, state = MechanicalModel(LinearElastic, inputs_LinearElastic)
+  model = MechanicalModel(LinearElastic, inputs_LinearElastic)
+  props = ConstitutiveModels.initialize_props(model, inputs_LinearElastic)
+  state_old = ConstitutiveModels.initialize_state(model)
+  Δt = 0.0
+  θ = 0.0
   λ_prop, μ = props[1], props[2]
   λs = LinRange(-0.5, 0.5, 100)
   for λ in λs
     F = ConstitutiveModels.deformation_gradient(SimpleShear, λ)
-    σ = cauchy_stress(model, props, F)
+    σ, state_new = cauchy_stress(model, props, Δt, F, θ, state_old)
     ε_xy = λ
     @test 0.0 ≈ σ[1, 1]
     @test 0.0 ≈ σ[2, 2]

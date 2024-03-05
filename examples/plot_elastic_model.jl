@@ -1,35 +1,24 @@
 using ConstitutiveModels
 using Plots
+using StaticArrays
 using Tensors
 
-props = Dict(
+inputs = Dict(
   "bulk modulus"  => 1000.0,#u"MPa",
   "shear modulus" => 1.0#u"MPa"
 )
-# model, props, state = NeoHookean(props)
-model, props, state = MechanicalModel(NeoHookean, props)
+model = MechanicalModel(ConstitutiveModels.Hencky, inputs)
 
-
-# props = Dict(
-#   "youngs modulus"            => 70e9,
-#   "poissons ratio"            => 0.3,
-#   "yield stress"              => 200.0e6,
-#   "isotropic hardening model" => "LinearIsotropicHardening",
-#   "hardening modulus"         => 200.0e6
-#   # "isotropic hardening model" => "VoceIsotropicHardening",
-#   # "A"                         => 200.0e6,
-#   # "n"                         => 20
-
-# )
-# model, props, state = LinearElastoPlasticity(props)
-
-function run_loop!(Fs, σs, motion, model, props, state, λs)
+function run_loop!(Fs, σs, motion, model, inputs, λs)
+  Δt = 0.0
+  θ  = 0.0
+  props = ConstitutiveModels.initialize_props(model, inputs)
+  state_old = ConstitutiveModels.initialize_state(model)
   for λ in λs
-    F = deformation_gradient(motion, model, props, λ, Tensor)
-    # P = pk1_stress(model, props, F)
-    # σ, state = cauchy_stress(model, props, F, state)
-    σ = cauchy_stress(model, props, F)
-    # @show σ
+    F = deformation_gradient(motion, λ, model, (props, Δt, θ, state_old))
+    σ, state_new = cauchy_stress(model, props, Δt, F, θ, state_old)
+    @show σ
+    state_old = state_new
     push!(Fs, F)
     push!(σs, σ)
   end
@@ -42,7 +31,7 @@ motion = UniaxialStressDisplacementControl
 Fs = Tensor{2, 3, Float64, 9}[]
 σs = Tensor{2, 3, Float64, 9}[]
 
-@time run_loop!(Fs, σs, motion, model, props, state, λs)
+@time run_loop!(Fs, σs, motion, model, inputs, λs)
 
 F_11s = map(x -> x[1, 1], Fs)
 σ_11s = map(x -> x[1, 1], σs)
