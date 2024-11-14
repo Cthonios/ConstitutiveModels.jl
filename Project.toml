@@ -1,13 +1,14 @@
 name = "ConstitutiveModels"
 uuid = "fc6ee7eb-129a-416f-804b-d7271ece6a3a"
 authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
-version = "0.1.3"
+version = "0.1.4"
 
 [deps]
 DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
+NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Tensors = "48a634ad-e948-5137-8d70-aa71f2a747f4"
 
@@ -23,8 +24,9 @@ DiffResults = "1"
 DocStringExtensions = "0.9"
 Enzyme = "0.13"
 ForwardDiff = "0.10"
-JET = "0.8"
+JET = "0.9"
 MuladdMacro = "0.2"
+NaNMath = "1"
 StaticArrays = "1"
 Tensors = "1"
 Test = "1"

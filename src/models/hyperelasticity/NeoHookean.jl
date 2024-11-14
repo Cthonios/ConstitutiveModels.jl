@@ -23,8 +23,9 @@ function helmholtz_free_energy(
 }
   K, G    = props[1], props[2]
   J       = det(F)
-  I_1_bar = tr(J^(-2. / 3.) * tdot(F))
-  W_vol   = 0.5 * K * (0.5 * (J^2 - 1) - log(J))
+  # I_1_bar = tr(J^(-2. / 3.) * tdot(F))
+  I_1_bar = tr(NaNMath.pow(J, -2. / 3.) * tdot(F))
+  W_vol   = 0.5 * K * (0.5 * (J^2 - 1) - NaNMath.log(J))
   W_dev   = 0.5 * G * (I_1_bar - 3.)
   ψ       = W_vol + W_dev
 
@@ -45,7 +46,8 @@ function pk1_stress(
 
   K, G    = props[1], props[2]
   J       = det(F)
-  J_23    = J^(-2. / 3.)
+  # J_23    = J^(-2. / 3.)
+  J_23    = NaNMath.pow(J, -2. / 3.)
   I_1     = tr(tdot(F))
   F_inv_T = inv(F)'
   P       = 0.5 * K * (J^2 - 1.) * F_inv_T + 
