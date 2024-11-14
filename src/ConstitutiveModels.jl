@@ -15,6 +15,7 @@ using DiffResults
 using DocStringExtensions
 using ForwardDiff
 using MuladdMacro
+using NaNMath
 using StaticArrays
 using Tensors
 
