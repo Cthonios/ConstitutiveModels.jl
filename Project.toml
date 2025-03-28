@@ -6,26 +6,33 @@ version = "0.1.2"
 [deps]
 DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
+NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Tensors = "48a634ad-e948-5137-8d70-aa71f2a747f4"
 
 [weakdeps]
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [extensions]
 ConstitutiveModelsEnzymeExt = ["Enzyme"]
+ConstitutiveModelsSymbolicsExt = ["Symbolics"]
 
 [compat]
 Aqua = "0.8"
 DiffResults = "1"
 DocStringExtensions = "0.9"
 Enzyme = "0.11"
+FiniteDiff = "2"
 ForwardDiff = "0.10"
-JET = "0.8"
+JET = "0.9"
 MuladdMacro = "0.2"
+NaNMath = "1"
 StaticArrays = "1"
+Symbolics = "6"
 Tensors = "1"
 Test = "1"
 TestSetExtensions = "2"
@@ -35,8 +42,9 @@ julia = "1"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 
 [targets]
-test = ["Aqua", "Enzyme", "JET", "Test", "TestSetExtensions"]
+test = ["Aqua", "JET", "Test", "TestSetExtensions"]

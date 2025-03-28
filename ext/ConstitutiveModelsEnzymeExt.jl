@@ -5,23 +5,39 @@ using Enzyme
 using StaticArrays
 using Tensors
 
-function Base.one(::Type{Tuple{Float64, SVector{N, Float64}}}) where N
-  return (1.0, ones(SVector{N, Float64}))
-end
-
-function ConstitutiveModels.helmholtz_free_energy_sensitivies(
-  ::Enzyme.ReverseMode{false},
-  model,
-  props, Δt, F, θ, state_old 
+function ConstitutiveModels.pk1_stress(
+  ::Enzyme.ReverseMode,
+  model, ∇u, θ, state, props, Δt
 )
-
-  grads = autodiff(
-    Reverse, helmholtz_free_energy,
-    Const(model),
-    Active(props), Active(Δt), Active(F), Active(θ), Active(state_old)
+  autodiff(
+    Forward, ConstitutiveModels.pk1_stress,
+    Const(model), 
+    Active(∇u),
+    Const(θ),
+    Const(state),
+    Const(props),
+    Const(Δt)
   )
 
 end
+
+# function Base.one(::Type{Tuple{Float64, SVector{N, Float64}}}) where N
+#   return (1.0, ones(SVector{N, Float64}))
+# end
+
+# function ConstitutiveModels.helmholtz_free_energy_sensitivies(
+#   ::Enzyme.ReverseMode{false},
+#   model,
+#   props, Δt, F, θ, state_old 
+# )
+
+#   grads = autodiff(
+#     Reverse, helmholtz_free_energy,
+#     Const(model),
+#     Active(props), Active(Δt), Active(F), Active(θ), Active(state_old)
+#   )
+
+# end
 
 # """
 # useful for hyperelastic models

@@ -1,7 +1,6 @@
 using Aqua
 using ConstitutiveModels
-# using Enzyme
-# using ForwardDiff
+using ForwardDiff
 using JET
 using Tensors
 using Test
@@ -11,16 +10,17 @@ using TestSetExtensions
 
 # end
 
-function ad_test(model::Mod, props::V, F::Tensor{2, 3, <:Number, 9}) where {Mod <: ConstitutiveModel, V <: AbstractArray{<:Number, 1}}
-  C = tdot(F)
-  J = det(F)
+# function ad_test(model, props::V, F::Tensor{2, 3, <:Number, 9}) where V <: AbstractArray{<:Number, 1}
+function ad_test(model, props, ∇u, θ, state, Δt)
+  # C = tdot(F)
+  # J = det(F)
   
-  P = pk1_stress(model, props, F)
+  # P = pk1_stress(model, props, F)
   # P_ad = Tensors.gradient(x -> energy(model, props, x), F)
   # P_enz = pk1_stress(Reverse, model, props, F)
-  P_ad = pk1_stress(ADMode, model, props, F)
+  # P_ad = pk1_stress(ADMode, model, props, F)
   # @test P ≈ P_ad
-  @test P ≈ P_ad
+  # @test P ≈ P_ad
 
   # σ = cauchy_stress(model, props, F)
   # # σ_ad = symmetric(J^-1 * dot(Tensors.gradient(x -> energy(model, props, x), F), F'))
@@ -28,17 +28,20 @@ function ad_test(model::Mod, props::V, F::Tensor{2, 3, <:Number, 9}) where {Mod 
 
   # # @test σ ≈ σ_ad
   # @test σ ≈ σ_enz
+  P = pk1_stress(model, ∇u, θ, state, props, Δt)
+  P_ad = Tensors.gradient(x -> helmholtz_free_energy(model, x, θ, state, props, Δt), z)
+  @test P ≈ P_ad
 end
 
 function ad_test(
-  model::Mod, props::V1,
-  motion::Type{Motion}, vals
-) where {Mod <: ConstitutiveModel, Motion <: SimpleMotion,
-         V1 <: AbstractArray{<:Number, 1}}
+  model, props::V1,
+  motion, vals
+) where V1 <: AbstractArray{<:Number, 1}
 
   for val in vals
     if motion <: UniaxialStressDisplacementControl
-      F = ConstitutiveModels.deformation_gradient(motion, model, props, val, Tensor)
+      # F = ConstitutiveModels.deformation_gradient(motion, model, props, val, Tensor)
+      @assert false
     else
       F = ConstitutiveModels.deformation_gradient(motion, val)
     end
@@ -46,13 +49,20 @@ function ad_test(
   end
 end
 
-@testset ExtendedTestSet "ConstitutiveModels.jl" begin
-  @testset ExtendedTestSet "MechanicalModels" begin
-    @testset ExtendedTestSet "HyperelasticModels" begin
-      include("hyperelastic_models/test_LinearElastic.jl")
-      # include("hyperelastic_models/test_NeoHookean.jl")
-    end
-  end
+# @testset ExtendedTestSet "ConstitutiveModels.jl" begin
+#   @testset ExtendedTestSet "MechanicalModels" begin
+#     @testset ExtendedTestSet "HyperelasticModels" begin
+#       include("hyperelastic_models/TestLinearElastic.jl")
+#       # include("hyperelastic_models/TestNeoHookean.jl")
+#     end
+#   end
+# end
+
+# include("hyperelastic_models/TestLinearElastic.jl")
+include("hyperelastic_models/TestNeoHookean.jl")
+
+@testset ExtendedTestSet "ScalarSolver" begin
+  include("TestScalarSolver.jl")
 end
 
 @testset ExtendedTestSet "Aqua" begin
