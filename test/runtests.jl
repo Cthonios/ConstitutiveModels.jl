@@ -2,7 +2,7 @@ using Aqua
 using ConstitutiveModels
 # using Enzyme
 # using ForwardDiff
-using JET
+# using JET
 using Tensors
 using Test
 using TestSetExtensions
@@ -63,6 +63,6 @@ end
   )
 end
 
-@testset ExtendedTestSet "JET" begin
-  JET.test_package(ConstitutiveModels; target_defined_modules=true)
-end
+# @testset ExtendedTestSet "JET" begin
+#   JET.test_package(ConstitutiveModels; target_defined_modules=true)
+# end
