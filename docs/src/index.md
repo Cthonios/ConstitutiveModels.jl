@@ -6,9 +6,12 @@ CurrentModule = ConstitutiveModels
 
 Documentation for [ConstitutiveModels](https://github.com/cmhamel/ConstitutiveModels.jl).
 
-```@index
+# Installation
+```
+pkg> add ConstitutiveModels
 ```
 
-```@autodocs
-Modules = [ConstitutiveModels]
+```julia
+using Pkg
+Pkg.add("ConstitutiveModels")
 ```

@@ -5,66 +5,175 @@ using Enzyme
 using StaticArrays
 using Tensors
 
-function Base.one(::Type{Tuple{Float64, SVector{N, Float64}}}) where N
-  return (1.0, ones(SVector{N, Float64}))
+# Below implementation
+# currently doesn't support the args...
+# we'll need to modify the EnzymeAD init cache type
+
+function _model_arg_types(::M, T=Float64) where {NP, NS, M <: ConstitutiveModels.AbstractConstitutiveModel{NP, NS}}
+    return (
+        Const{M}, 
+        Const{SVector{NP, T}},
+        Const{T},
+        Active{Tensor{2, 3, T, 9}},
+        Const{T},
+        Const{SVector{NS, T}}
+    )
 end
 
-function ConstitutiveModels.helmholtz_free_energy_sensitivies(
-  ::Enzyme.ReverseMode{false},
-  model,
-  props, Δt, F, θ, state_old 
-)
-
-  grads = autodiff(
-    Reverse, helmholtz_free_energy,
-    Const(model),
-    Active(props), Active(Δt), Active(F), Active(θ), Active(state_old)
-  )
-
+function _model_tape_type(model::M, T=Float64) where {NP, NS, M <: ConstitutiveModels.AbstractConstitutiveModel{NP, NS}}
+    arg_types = _model_arg_types(model, T)
+    tape_type(
+        ReverseSplitWithPrimal, 
+        Const{typeof(ConstitutiveModels.helmholtz_free_energy)}, 
+        Active,
+        arg_types...
+    )
 end
 
-# """
-# useful for hyperelastic models
-# """
-# function ConstitutiveModels.helmholtz_free_energy_sensitivies(
-#   ::Enzyme.ReverseMode{false},
-#   model::Mod, props::V1, F::M
-# ) where {
-#   Mod <: MechanicalModel,
-#   V1  <: AbstractArray{<:Number, 1},
-#   M   <: AbstractArray{<:Number, 2}
-# }
+function model_gradient(
+    model::ConstitutiveModels.AbstractMechanicalModel{NP, NS},
+    props::SVector{NP, T},
+    Δt::T,
+    ∇u::Tensor{2, 3, T, 9},
+    θ::T,
+    Z::SVector{NS, T},
+    args...
+) where {NP, NS, T}
+    autodiff(
+        Reverse,
+        ConstitutiveModels.helmholtz_free_energy,
+        Const(model),
+        Const(props),
+        Const(Δt),
+        Active(∇u),
+        Const(θ),
+        Const(Z)
+    )[1]
+end
 
-#   grads = autodiff(Reverse, helmholtz_free_energy, model, Active(props), Active(F))
-#   return grads[1][2], grads[1][3]
-# end
+function model_gradient_deferred(
+    model::ConstitutiveModels.AbstractMechanicalModel{NP, NS},
+    props::SVector{NP, T},
+    Δt::T,
+    ∇u::Tensor{2, 3, T, 9},
+    θ::T,
+    Z::SVector{NS, T},
+    args...
+) where {NP, NS, T}
+    TapeType = _model_tape_type(model, Float64)
+    arg_types = _model_arg_types(model, Float64)
 
-# function ConstitutiveModels.helmholtz_free_energy_sensitivies(
-#   ::Enzyme.ReverseMode{false},
-#   model::Mod, props::V1, F::Tensor{2, 3, T, 9}, state_old::V2
-# ) where {
-#   Mod <: MechanicalModel,
-#   V1  <: AbstractArray{<:Number, 1},
-#   T   <: Number,
-#   V2  <: AbstractArray{<:Number, 1}
-# }
+    # first pass for gradients
+    forward, reverse = autodiff_deferred_thunk(
+        ReverseSplitWithPrimal, 
+        TapeType, 
+        Const{typeof(ConstitutiveModels.helmholtz_free_energy)},
+        Active{Tuple{Float64, SVector{NS, Float64}}},
+        arg_types...
+    )
 
-#   grads = autodiff(Reverse, helmholtz_free_energy, model, Active(props), Active(F), Active(state_old))
-#   return grads[1][2], grads[1][3], grads[1][4]
-# end
+    tape, result, shadow_result = forward(
+        Const(ConstitutiveModels.helmholtz_free_energy),
+        Const(model), 
+        Const(props),
+        Const(Δt),
+        Active(∇u),
+        Const(θ),
+        Const(Z)
+    )
+    out = reverse(
+        Const(ConstitutiveModels.helmholtz_free_energy),
+        Const(model), 
+        Const(props),
+        Const(Δt),
+        Active(∇u),
+        Const(θ),
+        Const(Z),
+        (1., ones(typeof(Z))),
+        tape
+    )
+    # return out, result
+    return out
+end
 
-# function ConstitutiveModels.helmholtz_free_energy_sensitivies(
-#   ::Enzyme.ReverseMode{false},
-#   model::Mod, props::V1, ε::SymmetricTensor{2, 3, T, 6}, state_old::V2
-# ) where {
-#   Mod <: MechanicalModel,
-#   V1  <: AbstractArray{<:Number, 1},
-#   T   <: Number,
-#   V2  <: AbstractArray{<:Number, 1}
-# }
+function model_field_gradient_deferred(
+    model::ConstitutiveModels.AbstractMechanicalModel{NP, NS},
+    props::SVector{NP, T},
+    Δt::T,
+    ∇u::Tensor{2, 3, T, 9},
+    θ::T,
+    Z::SVector{NS, T},
+    args...
+) where {NP, NS, T}
+    return model_gradient_deferred(model, props, Δt, ∇u, θ, Z, args...)[1][4]
+end
 
-#   grads = autodiff(Reverse, helmholtz_free_energy, model, Active(props), Active(ε), Active(state_old))
-#   return grads[1][2], grads[1][3], grads[1][4]
-# end
+function model_field_hessian(
+    model::ConstitutiveModels.AbstractMechanicalModel{NP, NS},
+    props::SVector{NP, T},
+    Δt::T,
+    ∇u::Tensor{2, 3, T, 9},
+    θ::T,
+    Z::SVector{NS, T},
+    args...
+) where {NP, NS, T}
+    basis = ntuple(
+        i -> Tensor{2, 3, Float64, 9}(
+            ntuple(j -> ifelse(i == j, 1.0, 0.0), Val(9))
+        ), 
+        Val(9)
+    )
+    rows = autodiff(
+        Forward,
+        model_field_gradient_deferred,
+        Const(model), 
+        Const(props),
+        Const(Δt),
+        BatchDuplicated(∇u, basis),
+        Const(θ),
+        Const(Z)
+    )[1]
+    data = ntuple(i -> rows[(i-1) ÷ 9 + 1][(i-1) % 9 + 1], Val(81))
+    return Tensor{4, 3, T, 81}(data)
+end
+
+function ConstitutiveModels.pk1_stress(
+    model::ConstitutiveModels.AbstractMechanicalModel{NP, NS},
+    props::SVector{NP, T},
+    Δt::T,
+    ∇u::Tensor{2, 3, T, 9},
+    θ::T,
+    Z::SVector{NS, T},
+    ::ConstitutiveModels.EnzymeAD,
+    args...
+) where {NP, NS, T}
+    out = model_field_gradient_deferred(
+        model,
+        props,
+        Δt,
+        ∇u, θ, Z,
+        args...
+    )
+    # out[1][4], result[2]
+    out
+end
+
+function ConstitutiveModels.material_tangent(
+    model::ConstitutiveModels.AbstractMechanicalModel{NP, NS},
+    props,
+    Δt,
+    ∇u, θ, Z,
+    ::ConstitutiveModels.EnzymeAD,
+    args...
+) where {NP, NS}
+    model_field_hessian(
+        model,
+        props,
+        Δt,
+        ∇u, θ, Z,
+        # ad_cache,
+        args...
+    )
+end
 
 end # module

@@ -1,7 +1,7 @@
 name = "ConstitutiveModels"
 uuid = "fc6ee7eb-129a-416f-804b-d7271ece6a3a"
 authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
-version = "0.1.4"
+version = "0.1.5"
 
 [deps]
 DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
@@ -9,14 +9,18 @@ DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
 NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
+Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Tensors = "48a634ad-e948-5137-8d70-aa71f2a747f4"
 
 [weakdeps]
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [extensions]
 ConstitutiveModelsEnzymeExt = ["Enzyme"]
+ConstitutiveModelsRecipesBaseExt = ["LaTeXStrings", "RecipesBase"]
 
 [compat]
 Aqua = "0.8"
@@ -24,19 +28,19 @@ DiffResults = "1"
 DocStringExtensions = "0.9"
 Enzyme = "0.13"
 ForwardDiff = "1"
+LaTeXStrings = "1"
 MuladdMacro = "0.2"
 NaNMath = "1"
+RecipesBase = "1"
+Roots = "2"
 StaticArrays = "1"
 Tensors = "1"
 Test = "1"
-TestSetExtensions = "2"
 julia = "1"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
-Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 
 [targets]
-test = ["Aqua", "Enzyme", "Test", "TestSetExtensions"]
+test = ["Aqua", "Test"]
