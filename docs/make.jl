@@ -25,6 +25,7 @@ makedocs(;
         # "Mechanical Models"  => "mechanical_models.md",
         "Mechanicals Models" => [
             "mechanics/mechanical_models.md",
+            "mechanics/gent.md",
             "mechanics/linear_elastic.md",
             "mechanics/neohookean.md"
         ],

@@ -11,7 +11,8 @@ export cauchy_stress,
        material_hessian,
        material_tangent,
        pk1_stress
-export Hencky,
+export Gent,
+       Hencky,
        LinearElastic, 
        NeoHookean
 export LinearIsotropicHardening,
