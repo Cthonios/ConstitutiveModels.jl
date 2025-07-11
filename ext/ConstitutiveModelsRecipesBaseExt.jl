@@ -6,13 +6,14 @@ using RecipesBase
 
 @recipe function f(
     ::PureShearStrain, 
-    ∇us, results,
+    ∇us, σs, Zs,
     σ_11s_an=nothing, 
     σ_33s_an=nothing, 
     σ_12s_an=nothing
 )
     # check sizes here
-    @assert length(∇us) == length(results)
+    @assert length(∇us) == length(σs)
+    @assert length(∇us) == length(Zs)
     if σ_11s_an !== nothing
         @assert length(∇us) == length(σ_11s_an)
     end
@@ -30,9 +31,9 @@ using RecipesBase
     # unpack/re-format inputs
     Fs = map(x -> x + one(x), ∇us)
     F_12s = map(x -> x[1, 2], Fs)
-    σ_11s = map(x -> x[1][1, 1], results)
-    σ_33s = map(x -> x[1][3, 3], results)
-    σ_12s = map(x -> x[1][1, 2], results)
+    σ_11s = map(x -> x[1, 1], σs)
+    σ_33s = map(x -> x[3, 3], σs)
+    σ_12s = map(x -> x[1, 2], σs)
 
     num_pts = 10
     step = length(∇us) ÷ num_pts
@@ -90,13 +91,14 @@ end
 
 @recipe function f(
     ::SimpleShear, 
-    ∇us, results,
+    ∇us, σs, Zs,
     σ_11s_an=nothing, 
     σ_22s_an=nothing, 
     σ_12s_an=nothing
 )
     # check sizes here
-    @assert length(∇us) == length(results)
+    @assert length(∇us) == length(σs)
+    @assert length(∇us) == length(Zs)
     if σ_11s_an !== nothing
         @assert length(∇us) == length(σ_11s_an)
     end
@@ -114,9 +116,9 @@ end
     # unpack/re-format inputs
     Fs = map(x -> x + one(x), ∇us)
     F_12s = map(x -> x[1, 2], Fs)
-    σ_11s = map(x -> x[1][1, 1], results)
-    σ_22s = map(x -> x[1][2, 2], results)
-    σ_12s = map(x -> x[1][1, 2], results)
+    σ_11s = map(x -> x[1, 1], σs)
+    σ_22s = map(x -> x[2, 2], σs)
+    σ_12s = map(x -> x[1, 2], σs)
 
     num_pts = 10
     step = length(∇us) ÷ num_pts
@@ -175,7 +177,7 @@ end
 
 @recipe function f(
     ::M, 
-    ∇us, results,
+    ∇us, σs, Zs,
     σ_11s_an=nothing, 
     σ_22s_an=nothing
 ) where M <: Union{
@@ -183,7 +185,8 @@ end
     <:UniaxialStressDisplacementControl
 }
     # check sizes here
-    @assert length(∇us) == length(results)
+    @assert length(∇us) == length(σs)
+    @assert length(∇us) == length(Zs)
     if σ_11s_an !== nothing
         @assert length(∇us) == length(σ_11s_an)
     end
@@ -198,8 +201,8 @@ end
     # unpack/re-format inputs
     Fs = map(x -> x + one(x), ∇us)
     F_11s = map(x -> x[1, 1], Fs)
-    σ_11s = map(x -> x[1][1, 1], results)
-    σ_22s = map(x -> x[1][2, 2], results)
+    σ_11s = map(x -> x[1, 1], σs)
+    σ_22s = map(x -> x[2, 2], σs)
 
     num_pts = 10
     step = length(∇us) ÷ num_pts

@@ -1,12 +1,12 @@
-"""
-$(TYPEDEF)
-"""
+# """
+# $(TYPEDEF)
+# """
 struct Hencky <: AbstractHyperelasticModel{2, 0}
 end
 
-"""
-$(TYPEDSIGNATURES)
-"""
+# """
+# $(TYPEDSIGNATURES)
+# """
 function initialize_props(::Hencky, inputs::Dict{String})
     elastic_props = ElasticConstants(inputs)
     return Properties{2, eltype(elastic_props)}(
@@ -14,9 +14,9 @@ function initialize_props(::Hencky, inputs::Dict{String})
     )
 end
 
-"""
-$(TYPEDSIGNATURES)
-"""
+# """
+# $(TYPEDSIGNATURES)
+# """
 function helmholtz_free_energy(
     ::Hencky,
     props, Δt,
@@ -48,9 +48,6 @@ function helmholtz_free_energy(
     return ψ, Z
 end
 
-"""
-$(TYPEDSIGNATURES)
-"""
 function cauchy_stress(
     ::Hencky,
     props, Δt,
