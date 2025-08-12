@@ -34,9 +34,9 @@ function helmholtz_free_energy(
     I_1_bar = tr(NaNMath.pow(J, -2. / 3.) * tdot(F))
 
     # constitutive
-    W_vol = 0.5 * κ * (0.5 * (J^2 - 1) - NaNMath.log(J))
-    W_dev = 0.5 * μ * (I_1_bar - 3.)
-    ψ     = W_vol + W_dev
+    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - NaNMath.log(J))
+    ψ_dev = 0.5 * μ * (I_1_bar - 3.)
+    ψ     = ψ_vol + ψ_dev
     Z     = typeof(Z)()
     return ψ, Z
 end
@@ -50,12 +50,11 @@ function pk1_stress(
     κ, μ    = props[1], props[2]
     F       = ∇u + one(typeof(∇u))
     J       = det(F)
-    # J_23    = J^(-2. / 3.)
     J_23    = NaNMath.pow(J, -2. / 3.)
     I_1     = tr(tdot(F))
     F_inv_T = inv(F)'
     P       = 0.5 * κ * (J^2 - 1.) * F_inv_T + 
-            μ * J_23 * (F - (1. / 3.) * I_1 * F_inv_T)
+              μ * J_23 * (F - (1. / 3.) * I_1 * F_inv_T)
   
     # dummy state
     Z = typeof(Z)()

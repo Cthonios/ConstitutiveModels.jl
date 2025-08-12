@@ -1,43 +1,77 @@
 using ConstitutiveModels
 using Enzyme
+using LaTeXStrings
+using Plots
+using Tensors
 
-inputs = Dict(
-    "bulk modulus" => 10.,
-    "shear modulus" => 1.
-)
-model = ConstitutiveModels.NeoHookean()
-props = ConstitutiveModels.initialize_props(model, inputs)
-Z = ConstitutiveModels.initialize_state(model)
-θ = 0.
-Δt = 0.
-∇u = one(Tensor{2, 3, Float64, 9})
+function solve()
+    inputs = Dict(
+        "bulk modulus"  => 100.,
+        "shear modulus" => 1.,
+        "n"             => 4
+    )
+    elastic_props = ConstitutiveModels.ElasticConstants(inputs)
+    model = ConstitutiveModels.Hencky()
+    # model = ArrudaBoyce()
+    props = initialize_props(model, inputs)
+    Z = initialize_state(model)
+    θ = 0.
+    Δt = 0.
 
-ConstitutiveModels.helmholtz_free_energy(
-    model, props, Δt, ∇u, θ, Z
-)
+    motion = UniaxialStrain()
+    λs = LinRange(1., 1.5, 11)
 
-@show P_enz = ConstitutiveModels.pk1_stress(
-    model, props, Δt, ∇u, θ, Z, 
-    ConstitutiveModels.EnzymeAD()
-)
-@show P_fd = ConstitutiveModels.pk1_stress(
-    model, props, Δt, ∇u, θ, Z, 
-    ConstitutiveModels.ForwardDiffAD()
-)[1]
+    ∇us = Tensor{2, 3, Float64, 9}[]
+    σs = SymmetricTensor{2, 3, Float64, 6}[]
+    Zs = []
+    σ_xx_ans = []
+    σ_yy_ans = []
+    for λ in λs
+        ∇u = displacement_gradient(motion, λ)
+        σ, Z = cauchy_stress(model, props, Δt, ∇u, θ, Z, ConstitutiveModels.EnzymeAD())
+        # display(P)
+        κ, μ = props
+        
+        σ_xx = (elastic_props.λ * log(λ) + 2 * μ * log(λ)) / λ
+        σ_yy = (elastic_props.λ * log(λ)) / λ
+        push!(∇us, ∇u)
+        push!(σs, σ)
+        push!(Zs, Z)
+        push!(σ_xx_ans, σ_xx)
+        push!(σ_yy_ans, σ_yy)
+    end
+    plot(motion, ∇us, σs, Zs)#, σ_xx_ans, σ_yy_ans)
+end
+solve()
 
-@show P_enz - P_fd
-# P
+# ∇u = one(Tensor{2, 3, Float64, 9})
 
-@show A_enz = ConstitutiveModels.material_tangent(
-    model, props, Δt, ∇u, θ, Z, 
-    ConstitutiveModels.EnzymeAD()
-)
-@show A_fd = ConstitutiveModels.material_tangent(
-    model, props, Δt, ∇u, θ, Z, 
-    ConstitutiveModels.ForwardDiffAD()
-)[1]
+# ConstitutiveModels.helmholtz_free_energy(
+#     model, props, Δt, ∇u, θ, Z
+# )
 
-@show A_enz - A_fd
+# @show P_enz = ConstitutiveModels.pk1_stress(
+#     model, props, Δt, ∇u, θ, Z, 
+#     ConstitutiveModels.EnzymeAD()
+# )
+# @show P_fd = ConstitutiveModels.pk1_stress(
+#     model, props, Δt, ∇u, θ, Z, 
+#     ConstitutiveModels.ForwardDiffAD()
+# )[1]
+
+# @show P_enz - P_fd
+# # P
+
+# @show A_enz = ConstitutiveModels.material_tangent(
+#     model, props, Δt, ∇u, θ, Z, 
+#     ConstitutiveModels.EnzymeAD()
+# )
+# @show A_fd = ConstitutiveModels.material_tangent(
+#     model, props, Δt, ∇u, θ, Z, 
+#     ConstitutiveModels.ForwardDiffAD()
+# )[1]
+
+# @show A_enz - A_fd
 
 # x = rand(SVector{2, Float64})
 # v = rand(SVector{2, Float64})

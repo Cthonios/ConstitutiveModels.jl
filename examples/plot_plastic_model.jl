@@ -18,8 +18,8 @@ inputs = Dict(
 )
 
 model = LinearElastoPlasticity(
-  # VonMisesYieldSurface(
-  TrescaYieldSurface(
+  VonMisesYieldSurface(
+  # TrescaYieldSurface(
     LinearIsotropicHardening()
   )
 )
@@ -31,7 +31,7 @@ Z = initialize_state(model)
 motion = UniaxialStressDisplacementControl{Float64}()
 λs = LinRange(1.0, 1.1, 101)
 
-∇us, results = simulate(
+∇us, results = simulate_material_point(
   pk1_stress, model, props, Δt, θ, Z, motion, λs
 )
 Fs = map(x -> x + one(x), ∇us)
