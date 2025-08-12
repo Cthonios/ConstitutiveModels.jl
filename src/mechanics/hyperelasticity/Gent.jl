@@ -35,9 +35,9 @@ function helmholtz_free_energy(
     I_1_bar = tr(NaNMath.pow(J, -2. / 3.) * tdot(F))
 
     # constitutive
-    W_vol = 0.5 * κ * (0.5 * (J^2 - 1) - NaNMath.log(J))
-    W_dev = -μ * Jm / 2. * log(1. - (I_1_bar - 3.) / Jm)
-    ψ     = W_vol + W_dev
+    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - NaNMath.log(J))
+    ψ_dev = -μ * Jm / 2. * NaNMath.log(1. - (I_1_bar - 3.) / Jm)
+    ψ     = ψ_vol + ψ_dev
     Z     = typeof(Z)()
     return ψ, Z
 end

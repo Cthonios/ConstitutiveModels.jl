@@ -39,16 +39,34 @@ function model_gradient(
     Z::SVector{NS, T},
     args...
 ) where {NP, NS, T}
-    autodiff(
-        Reverse,
-        ConstitutiveModels.helmholtz_free_energy,
-        Const(model),
+    arg_types = _model_arg_types(model, Float64)
+    forward, reverse = autodiff_thunk(
+        ReverseSplitWithPrimal, 
+        Const{typeof(ConstitutiveModels.helmholtz_free_energy)},
+        Active{Tuple{Float64, SVector{NS, Float64}}},
+        arg_types...
+    )
+    tape, result, shadow_result = forward(
+        Const(ConstitutiveModels.helmholtz_free_energy),
+        Const(model), 
         Const(props),
         Const(Δt),
         Active(∇u),
         Const(θ),
         Const(Z)
-    )[1]
+    )
+    out = reverse(
+        Const(ConstitutiveModels.helmholtz_free_energy),
+        Const(model), 
+        Const(props),
+        Const(Δt),
+        Active(∇u),
+        Const(θ),
+        Const(Z),
+        (1., ones(typeof(Z))),
+        tape
+    )
+    return result, out
 end
 
 function model_gradient_deferred(
@@ -147,15 +165,14 @@ function ConstitutiveModels.pk1_stress(
     ::ConstitutiveModels.EnzymeAD,
     args...
 ) where {NP, NS, T}
-    out = model_field_gradient_deferred(
+    result, dresult = model_gradient(
         model,
         props,
         Δt,
         ∇u, θ, Z,
         args...
     )
-    # out[1][4], result[2]
-    out
+    dresult[1][4], result[2]
 end
 
 function ConstitutiveModels.material_tangent(

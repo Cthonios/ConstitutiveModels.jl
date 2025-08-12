@@ -258,7 +258,11 @@ end
 @inline _dsqrt(x) = NaNMath.sqrt(x) / 2
 
 @inline function log_safe(A)
-  return _matrix_function(NaNMath.log, A)
+  if A == one(A)
+    return zero(A)
+  else
+    return _matrix_function(NaNMath.log, A)
+  end
 end
 
 # for some reason, typing this makes the derivative not register

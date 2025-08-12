@@ -74,8 +74,10 @@ function test_hencky_uniaxial_strain(model, inputs)
     κ, μ = props[1], props[2]
     λ = κ - (2. / 3.) * μ
     # σ_xx_an = (λ * εs .+ 2. * μ * εs) ./ λs
-    σ_xx_an = (κ * εs .+ (4. / 3.) * μ * εs) / λs
-    σ_yy_an = λ * εs
+    # σ_xx_an = (κ * εs .+ (4. / 3.) * μ * εs) / λs
+    # σ_yy_an = λ * εs
+    σ_xx_an = (λ * εs .+ 2 * μ * εs) ./ λs
+    σ_yy_an = (λ * εs) ./ λs
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
 end
 

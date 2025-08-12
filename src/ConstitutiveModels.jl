@@ -11,7 +11,8 @@ export cauchy_stress,
        material_hessian,
        material_tangent,
        pk1_stress
-export Gent,
+export ArrudaBoyce,
+       Gent,
        Hencky,
        LinearElastic, 
        NeoHookean
@@ -34,6 +35,7 @@ export BiaxialStrain,
 # dependencies
 using DocStringExtensions
 using ForwardDiff
+using InverseLangevinApproximations
 using MuladdMacro
 using NaNMath
 using Roots

@@ -3,22 +3,24 @@ using Plots
 
 inputs = Dict(
   "Young's modulus" => 1.0,
-  "Poisson's ratio" => 0.49995
+  "Poisson's ratio" => 0.49995,
+  "n"               => 25
 )
 
 motion = UniaxialStressDisplacementControl{Float64}()
-λs = LinRange(1.0, 4., 101)
+λs = LinRange(1.0, 8., 101)
 
-model = NeoHookean()
+# model = NeoHookean()
+model = ArrudaBoyce()
 props = initialize_props(model, inputs)
 Δt = 0.0
 θ  = 0.0
 Z = initialize_state(model)
 
-@time ∇us, results = simulate(
+@time ∇us, σs, Zs = simulate_material_point(
   pk1_stress, model, props, Δt, θ, Z, motion, λs
 )
 Fs = map(x -> x + one(x), ∇us)
 F_11s = map(x -> x[1, 1], Fs)
-σ_11s = map(x -> x[1][1, 1], results)
+σ_11s = map(x -> x[1, 1], σs)
 p = plot(F_11s, σ_11s)
