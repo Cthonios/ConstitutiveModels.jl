@@ -56,9 +56,9 @@ end
     include("TestPlasticityModels.jl")
 end
 
-# @testset "Aqua" begin
-#     Aqua.test_all(
-#         ConstitutiveModels,
-#         piracies=false
-#     )
-# end
+@testset "Aqua" begin
+    Aqua.test_all(
+        ConstitutiveModels,
+        piracies=false
+    )
+end
