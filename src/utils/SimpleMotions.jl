@@ -169,7 +169,7 @@ function _motion_objective(
         0.,     0., x
     ))
     props, Δt, θ, Z = model_inputs
-    @time σ, _ = pk1_stress(model, props, Δt, ∇u, θ, Z)
+    σ, _ = pk1_stress(model, props, Δt, ∇u, θ, Z)
     return σ[2, 2]
 end
 
