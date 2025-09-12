@@ -31,10 +31,14 @@ function helmholtz_free_energy(
     I       = one(typeof(∇u))
     F       = ∇u + I
     J       = det(F)
-    I_1_bar = tr(NaNMath.pow(J, -2. / 3.) * tdot(F))
+    # I_1_bar = tr(NaNMath.pow(J, -2. / 3.) * tdot(F))
+    J_m_13  = 1. / cbrt(J)
+    J_m_23  = J_m_13 * J_m_13
+    I_1_bar = tr(J_m_23 * tdot(F))
 
     # constitutive
-    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - NaNMath.log(J))
+    # ψ_vol = 0.5 * κ * (0.5 * (J * J - 1) - NaNMath.log(J))
+    ψ_vol = 0.5 * κ * (0.5 * (J * J - 1) - log(J))
     ψ_dev = 0.5 * μ * (I_1_bar - 3.)
     ψ     = ψ_vol + ψ_dev
     Z     = typeof(Z)()
@@ -44,17 +48,20 @@ end
 function pk1_stress(
     ::NeoHookean, 
     props, Δt, 
-    ∇u, θ, Z
+    ∇u, θ, Z,
+    ::ForwardDiffAD
   )
   
     κ, μ    = props[1], props[2]
     F       = ∇u + one(typeof(∇u))
     J       = det(F)
-    J_23    = NaNMath.pow(J, -2. / 3.)
+    J_m_13  = 1. / cbrt(J)
+    J_m_23  = J_m_13 * J_m_13
+    # J_23    = NaNMath.pow(J, -2. / 3.)
     I_1     = tr(tdot(F))
     F_inv_T = inv(F)'
-    P       = 0.5 * κ * (J^2 - 1.) * F_inv_T + 
-              μ * J_23 * (F - (1. / 3.) * I_1 * F_inv_T)
+    P       = 0.5 * κ * (J * J - 1.) * F_inv_T + 
+              μ * J_m_23 * (F - (1. / 3.) * I_1 * F_inv_T)
   
     # dummy state
     Z = typeof(Z)()
