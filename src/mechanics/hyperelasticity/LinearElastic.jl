@@ -22,7 +22,7 @@ $(TYPEDSIGNATURES)
 function helmholtz_free_energy(
     ::LinearElastic,
     props, Δt,
-    ∇u, θ, Z
+    ∇u, θ, Z_old, Z_new
 )
     # unpack properties
     λ, μ = props[1], props[2]
@@ -33,32 +33,30 @@ function helmholtz_free_energy(
 
     # constitutive
     ψ = 0.5 * λ * tr(ε)^2 + μ * dcontract(ε, ε)
-    Z = typeof(Z)()
 
-    return ψ, Z
+    return ψ
 end
 
 function cauchy_stress(
     model::LinearElastic,
     props, Δt,
-    ∇u::Tensor{2, 3, T, 9}, θ, Z
+    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new
 ) where T <: Number
     # kinematics
     ε = symmetric(∇u)
     # constitutive
-    return cauchy_stress(model, props, Δt, ε, θ, Z)
+    return cauchy_stress(model, props, Δt, ε, θ, Z_old, Z_new)
 end
 
 function cauchy_stress(
     ::LinearElastic,
     props, Δt,
-    ε::SymmetricTensor{2, 3, T, 6}, θ, Z
+    ε::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
 ) where T <: Number
     # unpack properties
     λ, μ = props[1], props[2]
     # constitutive
     I = one(ε)
     σ = λ * tr(ε) * I + 2. * μ * ε
-    Z = typeof(Z)()
-    return σ, Z
+    return σ
 end

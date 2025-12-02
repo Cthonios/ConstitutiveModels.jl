@@ -4,15 +4,16 @@
 
 function test_gent_simple_shear(model, inputs)
     props = initialize_props(model, inputs)
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
     Δt = 0.0
     θ = 0.0
 
     motion = SimpleShear()
     γs = LinRange(0.0, 0.05, 101)
 
-    ∇us, σs, Zs = simulate_material_point(
-        cauchy_stress, model, props, Δt, θ, Z, motion, γs
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs
     )
     κ, μ, Jm = props[1], props[2], props[3]
     σ_xx_an = (2. / 3.) * Jm * μ * γs.^2 ./ (Jm .- γs.^2)
@@ -23,15 +24,16 @@ end
 
 function test_gent_uniaxial_strain(model, inputs)
     props = initialize_props(model, inputs)
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
     Δt = 0.0
     θ = 0.0
 
     motion = UniaxialStrain()
     λs = LinRange(0.25, 4., 101)
 
-    ∇us, σs, Zs = simulate_material_point(
-        cauchy_stress, model, props, Δt, θ, Z, motion, λs
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
     )
     κ, μ, Jm = props[1], props[2], props[3]
     σ_xx_an = 0.5 * κ .* (λs .- 1. ./ λs) -
@@ -59,15 +61,16 @@ end
 #########################################################
 function test_hencky_uniaxial_strain(model, inputs)
     props = initialize_props(model, inputs)
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
     Δt = 0.0
     θ = 0.0
 
     motion = UniaxialStrain()
     λs = LinRange(0.95, 1.05, 11)
 
-    ∇us, σs, Zs = simulate_material_point(
-        cauchy_stress, model, props, Δt, θ, Z, motion, λs
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
     )
     # εs = λs .- 1.
     εs = log.(λs)
@@ -98,15 +101,16 @@ end
 
 function test_linear_elastic_simple_shear(model, inputs)
     props = initialize_props(model, inputs)
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
     Δt = 0.0
     θ = 0.0
 
     motion = SimpleShear()
     γs = LinRange(0.0, 0.05, 101)
 
-    ∇us, σs, Zs = simulate_material_point(
-        cauchy_stress, model, props, Δt, θ, Z, motion, γs
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs
     )
     λ, μ = props[1], props[2]
     σ_xx_an = 0. * γs
@@ -117,15 +121,16 @@ end
 
 function test_linear_elastic_uniaxial_strain(model, inputs)
     props = initialize_props(model, inputs)
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
     Δt = 0.0
     θ = 0.0
 
     motion = UniaxialStrain()
     λs = LinRange(0.95, 1.05, 101)
 
-    ∇us, σs, Zs = simulate_material_point(
-        cauchy_stress, model, props, Δt, θ, Z, motion, λs
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
     )
     εs = λs .- 1.
     λ, μ = props[1], props[2]
@@ -136,15 +141,16 @@ end
 
 function test_linear_elastic_uniaxial_stress(model, inputs)
     props = initialize_props(model, inputs)
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
     Δt = 0.0
     θ = 0.0
 
     motion = UniaxialStressDisplacementControl()
     λs = LinRange(0.95, 1.05, 101)
 
-    ∇us, σs, Zs = simulate_material_point(
-        cauchy_stress, model, props, Δt, θ, Z, motion, λs
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
     )
     εs = map(symmetric, ∇us)
     λ, μ = props[1], props[2]
@@ -172,15 +178,16 @@ end
 
 function test_neohookean_simple_shear(model, inputs)
     props = initialize_props(model, inputs)
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
     Δt = 0.0
     θ = 0.0
 
     motion = SimpleShear()
     γs = LinRange(0.0, 0.5, 101)
 
-    ∇us, σs, Zs = simulate_material_point(
-        cauchy_stress, model, props, Δt, θ, Z, motion, γs
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs
     )
     κ, μ = props[1], props[2]
     σ_xx_an = (2. / 3.) * μ * γs.^2
@@ -191,15 +198,16 @@ end
 
 function test_neohookean_uniaxial_strain(model, inputs)
     props = initialize_props(model, inputs)
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
     Δt = 0.0
     θ = 0.0
 
     motion = UniaxialStrain()
     λs = LinRange(0.25, 4., 101)
 
-    ∇us, σs, Zs = simulate_material_point(
-        cauchy_stress, model, props, Δt, θ, Z, motion, λs
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
     )
     κ, μ = props[1], props[2]
     σ_xx_an = 0.5 * κ .* (λs .- 1. ./ λs) +

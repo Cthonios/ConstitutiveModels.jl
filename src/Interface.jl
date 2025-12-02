@@ -27,7 +27,8 @@ function initialize_state(
     ::AbstractConstitutiveModel{NP, NS},
     float_type = Float64
 ) where {NP, NS}
-    return zero(SVector{NS, float_type})
+    # return zero(SVector{NS, float_type})
+    return zeros(NS)
 end
 
 @inline function unpack_props(

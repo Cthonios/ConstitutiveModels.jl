@@ -37,12 +37,10 @@ using DocStringExtensions
 using ForwardDiff
 using InverseLangevinApproximations
 using MuladdMacro
-using NaNMath
 using Roots
 using StaticArrays
 using Tensors
 
-include("utils/AD.jl")
 include("utils/Eigen.jl")
 include("utils/ElasticConstants.jl")
 include("utils/solvers/NewtonSolver.jl")
