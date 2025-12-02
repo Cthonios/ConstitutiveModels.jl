@@ -28,7 +28,7 @@ end
 function helmholtz_free_energy(
     model::LinearElastoPlasticity,
     props, Δt,
-    ∇u, θ, Z
+    ∇u, θ, Z_old, Z_new
 )
 
     # unpack props
@@ -40,13 +40,13 @@ function helmholtz_free_energy(
     ε = symmetric(∇u)
 
     # unpack state variables
-    ε_p_old, α_old = unpack_state(model, Z)
+    ε_p_old, α_old = unpack_state(model, Z_old)
 
     # calculate elastic trial stress
     ε_e_tr = ε - ε_p_old
-    σ_e_tr, _ = cauchy_stress(
+    σ_e_tr = cauchy_stress(
         model.elastic_model, elastic_props, Δt,
-        ε_e_tr, θ, SVector{0, typeof(θ)}()
+        ε_e_tr, θ, Z_old, Z_new
     )
 
     # calculate hardening increment
@@ -66,28 +66,38 @@ function helmholtz_free_energy(
     ε_e = ε - ε_p_new
 
     # energies
-    ψ_e, _ = helmholtz_free_energy(
+    ψ_e = helmholtz_free_energy(
         model.elastic_model, 
         elastic_props, Δt,
-        ε_e, θ, SVector{0, typeof(θ)}()
+        ε_e, θ, Z_old, Z_new
     )
     # TODO need to cleanup interface to hardening
     ψ_hard = energy(model.yield_surface.isotropic_hardening, yield_props, α_new)
     ψ = ψ_e + ψ_hard
 
     # pack state
-    Z = pack_state(model, ε_p_new, α_new)
+    # Z = pack_state(model, ε_p_new, α_new)
+    pack_state!(Z_new, model, ε_p_new, α_new)
 
-    return ψ, Z
+    return ψ
 end
 
 function pack_state(::LinearElastoPlasticity, ε_p, α)
     return SVector{7, eltype(ε_p)}(ε_p.data..., α)
 end
 
+function pack_state!(state, ::LinearElastoPlasticity, ε_p, α)
+    # display(ε_p)
+    # display(ForwardDiff.value.(ε_p.data) |> typeof)
+    state[1:6] .= ForwardDiff.value.(ε_p.data)
+    state[7] = ForwardDiff.value(α)
+    return nothing
+end
+
 function unpack_state(::LinearElastoPlasticity, Z)
-    indices = SVector{6, Int}(1:6)
-    ε_p = SymmetricTensor{2, 3, eltype(Z), 6}(Z[indices])
+    # indices = SVector{6, Int}(1:6)
+    # ε_p = SymmetricTensor{2, 3, eltype(Z), 6}(Z[indices])
+    ε_p = SymmetricTensor{2, 3, eltype(Z), 6}(@views Z[1:6])
     α = Z[7]
     return ε_p, α
 end

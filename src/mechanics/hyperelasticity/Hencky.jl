@@ -24,7 +24,7 @@ $(TYPEDSIGNATURES)
 function helmholtz_free_energy(
     ::Hencky,
     props, Δt,
-    ∇u, θ, Z,
+    ∇u, θ, Z_old, Z_new,
     args...
 )
     # unpack properties
@@ -41,8 +41,7 @@ function helmholtz_free_energy(
     ψ_vol = 0.5 * κ * trE^2
     ψ_dev = μ * dcontract(E_dev, E_dev)
     ψ     = ψ_vol + ψ_dev
-    Z     = typeof(Z)()
-    return ψ, Z
+    return ψ
 end
 
 # function cauchy_stress(

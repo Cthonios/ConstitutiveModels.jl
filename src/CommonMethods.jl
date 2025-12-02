@@ -17,25 +17,25 @@ $(TYPEDSIGNATURES)
 function cauchy_stress(
     model::ModelsWithMechanics,
     props, Δt,
-    ∇u, θ, Z,
+    ∇u, θ, Z_old, Z_new,
     args...
 )
     F = ∇u + one(∇u)
     J = det(F)
-    P, Z = pk1_stress(model, props, Δt, ∇u, θ, Z, args...)
+    P = pk1_stress(model, props, Δt, ∇u, θ, Z_old, Z_new, args...)
     σ = (1. / J) * dot(P, F')
-    return σ, Z
+    return σ
 end
 
 function entropy(
     model::ModelsWithThermal,
     props, Δt,
-    ∇u, θ, Z,
+    ∇u, θ, Z_old, Z_new,
     args...
 )
     return entropy(
         model, props, Δt,
-        ∇u, θ, Z,
+        ∇u, θ, Z_old, Z_new,
         ForwardDiffAD(),
         args...
     )
@@ -44,12 +44,12 @@ end
 function heat_capacity(
     model::ModelsWithThermal,
     props, Δt,
-    ∇u, θ, Z,
+    ∇u, θ, Z_old, Z_new,
     args...
 )
     return heat_capacity(
         model, props, Δt,
-        ∇u, θ, Z,
+        ∇u, θ, Z_old, Z_new,
         ForwardDiffAD(),
         args...
     )
@@ -73,7 +73,7 @@ $(TYPEDSIGNATURES)
 function helmholtz_free_energy(
     ::ModelsWithMechanics,
     props, Δt,
-    ∇u, θ, Z,
+    ∇u, θ, Z_old, Z_new,
     args...
 )
     @assert false "Needs to be implemented"
@@ -104,12 +104,12 @@ $(TYPEDSIGNATURES)
 function material_tangent(
     model::ModelsWithMechanics,
     props, Δt,
-    ∇u, θ, Z,
+    ∇u, θ, Z_old, Z_new,
     args...
 )
     return material_tangent(
         model, props, Δt,
-        ∇u, θ, Z,
+        ∇u, θ, Z_old, Z_new,
         ForwardDiffAD(),
         args...
     )
@@ -140,12 +140,12 @@ $(TYPEDSIGNATURES)
 function pk1_stress(
     model::ModelsWithMechanics,
     props, Δt,
-    ∇u, θ, Z,
+    ∇u, θ, Z_old, Z_new,
     args...
 )
     return pk1_stress(
         model, props, Δt,
-        ∇u, θ, Z,
+        ∇u, θ, Z_old, Z_new,
         ForwardDiffAD(),
         args...
     )
@@ -156,42 +156,40 @@ end
 function entropy(
     model::ModelsWithThermal,
     props, Δt,
-    ∇u, θ, Z::SVector{NS, T},
+    ∇u, θ, Z_old, Z_ne,
     ::ForwardDiffAD,
     args...
-)::Tuple{T, SVector{NS, T}} where {NS, T}
-    results = Tensors.gradient(z -> 
-        helmholtz_free_energy(model, props, Δt, ∇u, z, Z, args...),
+)
+    η = -Tensors.gradient(z -> 
+        helmholtz_free_energy(model, props, Δt, ∇u, z, Z_old, Z_new, args...),
         θ
     )
-    η = -results[1]
-    return η, results[2]
+    return η
 end
 
 function heat_capacity(
     model::ModelsWithThermal,
     props, Δt,
-    ∇u, θ, Z::SVector{NS, T},
+    ∇u, θ, Z_old, Z_new,
     ::ForwardDiffAD,
     args...
-)::Tuple{T, SVector{NS, T}} where {NS, T}
-    results = Tensors.hessian(z -> 
-        helmholtz_free_energy(model, props, Δt, ∇u, z, Z, args...),
+)
+    c = -θ * Tensors.hessian(z -> 
+        helmholtz_free_energy(model, props, Δt, ∇u, z, Z_old, Z_new, args...),
         θ
     )
-    c = -θ * results[1]
-    return c, results[2]
+    return c
 end
 
 function material_tangent(
     model::ModelsWithMechanics,
     props, Δt,
-    ∇u, θ, Z,
+    ∇u, θ, Z_old, Z_new,
     ::ForwardDiffAD,
     args...
 )
     return Tensors.gradient(z -> 
-        pk1_stress(model, props, Δt, z, θ, Z, ForwardDiffAD(), args...),
+        pk1_stress(model, props, Δt, z, θ, Z_old, Z_new, ForwardDiffAD(), args...),
         ∇u
     )
 end
@@ -199,12 +197,12 @@ end
 function pk1_stress(
     model::ModelsWithMechanics,
     props, Δt,
-    ∇u, θ, Z,
+    ∇u, θ, Z_old, Z_new,
     ::ForwardDiffAD,
     args...
 )
     return Tensors.gradient(z -> 
-        helmholtz_free_energy(model, props, Δt, z, θ, Z, args...),
+        helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new, args...),
         ∇u
     )
 end

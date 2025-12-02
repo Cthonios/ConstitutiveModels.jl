@@ -23,7 +23,7 @@ $(TYPEDSIGNATURES)
 function helmholtz_free_energy(
     ::Gent,
     props, Δt,
-    ∇u, θ, Z
+    ∇u, θ, Z_old, Z_new
 )
     # unpack properties
     κ, μ, Jm = props[1], props[2], props[3]
@@ -32,12 +32,13 @@ function helmholtz_free_energy(
     I       = one(typeof(∇u))
     F       = ∇u + I
     J       = det(F)
-    I_1_bar = tr(NaNMath.pow(J, -2. / 3.) * tdot(F))
+    J_m_13  = 1. / cbrt(J)
+    J_m_23  = J_m_13 * J_m_13
+    I_1_bar = tr(J_m_23 * tdot(F))
 
     # constitutive
-    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - NaNMath.log(J))
-    ψ_dev = -μ * Jm / 2. * NaNMath.log(1. - (I_1_bar - 3.) / Jm)
+    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - log(J))
+    ψ_dev = -μ * Jm / 2. * log(1. - (I_1_bar - 3.) / Jm)
     ψ     = ψ_vol + ψ_dev
-    Z     = typeof(Z)()
-    return ψ, Z
+    return ψ
 end

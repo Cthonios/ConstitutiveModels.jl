@@ -12,7 +12,7 @@ end
 function helmholtz_free_energy(
     ::ArrudaBoyce,
     props, Δt,
-    ∇u, θ, Z
+    ∇u, θ, Z_old, Z_new
 )
     # unpack properties
     κ, μ, sqrt_n = props[1], props[2], props[3]
@@ -21,8 +21,10 @@ function helmholtz_free_energy(
     I       = one(typeof(∇u))
     F       = ∇u + I
     J       = det(F)
-    I_1_bar = tr(NaNMath.pow(J, -2. / 3.) * tdot(F))
-    λ_chain = NaNMath.sqrt(I_1_bar / 3)
+    J_m_13  = 1. / cbrt(J)
+    J_m_23  = J_m_13 * J_m_13
+    I_1_bar = tr(J_m_23 * tdot(F))
+    λ_chain = sqrt(I_1_bar / 3)
 
     β = inverse_langevin_approximation(
         λ_chain / sqrt_n, 
@@ -30,9 +32,8 @@ function helmholtz_free_energy(
     )
 
     # constitutive
-    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - NaNMath.log(J))
-    ψ_dev = μ * sqrt_n * (β * λ_chain - sqrt_n * NaNMath.log(sinh(β) / β))
+    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - log(J))
+    ψ_dev = μ * sqrt_n * (β * λ_chain - sqrt_n * log(sinh(β) / β))
     ψ = ψ_vol + ψ_dev
-    Z = typeof(Z)()
-    return ψ, Z   
+    return ψ
 end
