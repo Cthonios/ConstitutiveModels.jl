@@ -4,7 +4,7 @@ end
 function initialize_props(::LinearIsotropicHardening, inputs::Dict{String})
     σ_y = inputs["yield stress"]
     H = inputs["hardening modulus"]
-    return SVector{2, Float64}(σ_y, H)
+    return [σ_y, H]
 end
 
 energy(::LinearIsotropicHardening, props::V, eqps) where V <: AbstractArray = props[1] * eqps + 0.5 * props[2] * eqps * eqps

@@ -9,9 +9,7 @@ $(TYPEDSIGNATURES)
 """
 function initialize_props(::Hencky, inputs::Dict{String})
     elastic_props = ElasticConstants(inputs)
-    return Properties{2, eltype(elastic_props)}(
-        elastic_props.κ, elastic_props.μ
-    )
+    return [elastic_props.κ, elastic_props.μ]
 end
 
 """

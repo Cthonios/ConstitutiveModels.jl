@@ -1,5 +1,5 @@
 using ConstitutiveModels
-using Enzyme
+# using Enzyme
 using Plots
 
 inputs = Dict(

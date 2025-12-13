@@ -7,28 +7,23 @@ version = "0.3.0"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 InverseLangevinApproximations = "b82787f2-62be-403e-9078-6d9feafd7ee3"
-MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Tensors = "48a634ad-e948-5137-8d70-aa71f2a747f4"
 
 [weakdeps]
-#Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [extensions]
-#ConstitutiveModelsEnzymeExt = ["Enzyme"]
 ConstitutiveModelsRecipesBaseExt = ["LaTeXStrings", "RecipesBase"]
 
 [compat]
 Aqua = "0.8"
 DocStringExtensions = "0.9"
-#Enzyme = "0.13"
 ForwardDiff = "1"
 InverseLangevinApproximations = "0.2"
 LaTeXStrings = "1"
-MuladdMacro = "0.2"
 RecipesBase = "1"
 Roots = "2"
 StaticArrays = "1"

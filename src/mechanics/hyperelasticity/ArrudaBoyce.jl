@@ -4,10 +4,18 @@ end
 function initialize_props(::ArrudaBoyce, inputs::Dict{String})
     elastic_props = ElasticConstants(inputs)
     n = inputs["n"]
-    return Properties{3, eltype(elastic_props)}(
-        elastic_props.κ, elastic_props.μ, sqrt(n)
-    )
+    return [elastic_props.κ, elastic_props.μ, sqrt(n)]
 end
+
+# using treloar approximation
+# function _inverse_langevin_approx(y)
+#     return 3 * y / (1 - (3 / 5 * y^2 + 36 / 175 * y^4 + 108 / 875 * y^6))
+# end
+
+# function _dinverse_langevin_approx(y)
+#     return 13125 * (108 * y^6 + 108 * y^4 + 105 * y^2 + 175) /
+#         (-108 * y^6 - 180 * y^4 - 525 * y^2 + 875)^2
+# end
 
 function helmholtz_free_energy(
     ::ArrudaBoyce,

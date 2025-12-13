@@ -3,7 +3,7 @@ end
 
 function initialize_props(::NoIsotropicHardening, inputs::Dict{String})
     σ_y = inputs["yield stress"]
-    return SVector{1, Float64}(σ_y)
+    return [σ_y]
 end
 
 energy(::NoIsotropicHardening, props::V, eqps) where V <: AbstractArray = props[1] * eqps
