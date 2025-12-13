@@ -30,28 +30,24 @@ end
 function entropy(
     model::ModelsWithThermal,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    args...
+    ∇u, θ, Z_old, Z_new
 )
     return entropy(
         model, props, Δt,
         ∇u, θ, Z_old, Z_new,
-        ForwardDiffAD(),
-        args...
+        ForwardDiffAD()
     )
 end
 
 function heat_capacity(
     model::ModelsWithThermal,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    args...
+    ∇u, θ, Z_old, Z_new
 )
     return heat_capacity(
         model, props, Δt,
         ∇u, θ, Z_old, Z_new,
-        ForwardDiffAD(),
-        args...
+        ForwardDiffAD()
     )
 end
 
@@ -73,8 +69,7 @@ $(TYPEDSIGNATURES)
 function helmholtz_free_energy(
     ::ModelsWithMechanics,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    args...
+    ∇u, θ, Z_old, Z_new
 )
     @assert false "Needs to be implemented"
 end
@@ -104,14 +99,12 @@ $(TYPEDSIGNATURES)
 function material_tangent(
     model::ModelsWithMechanics,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    args...
+    ∇u, θ, Z_old, Z_new
 )
     return material_tangent(
         model, props, Δt,
         ∇u, θ, Z_old, Z_new,
-        ForwardDiffAD(),
-        args...
+        ForwardDiffAD()
     )
 end
 
@@ -141,13 +134,11 @@ function pk1_stress(
     model::ModelsWithMechanics,
     props, Δt,
     ∇u, θ, Z_old, Z_new,
-    args...
 )
     return pk1_stress(
         model, props, Δt,
         ∇u, θ, Z_old, Z_new,
-        ForwardDiffAD(),
-        args...
+        ForwardDiffAD()
     )
 end
 
@@ -156,12 +147,11 @@ end
 function entropy(
     model::ModelsWithThermal,
     props, Δt,
-    ∇u, θ, Z_old, Z_ne,
-    ::ForwardDiffAD,
-    args...
+    ∇u, θ, Z_old, Z_new,
+    ::ForwardDiffAD
 )
     η = -Tensors.gradient(z -> 
-        helmholtz_free_energy(model, props, Δt, ∇u, z, Z_old, Z_new, args...),
+        helmholtz_free_energy(model, props, Δt, ∇u, z, Z_old, Z_new),
         θ
     )
     return η
@@ -171,11 +161,10 @@ function heat_capacity(
     model::ModelsWithThermal,
     props, Δt,
     ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD,
-    args...
+    ::ForwardDiffAD
 )
     c = -θ * Tensors.hessian(z -> 
-        helmholtz_free_energy(model, props, Δt, ∇u, z, Z_old, Z_new, args...),
+        helmholtz_free_energy(model, props, Δt, ∇u, z, Z_old, Z_new),
         θ
     )
     return c
@@ -185,11 +174,10 @@ function material_tangent(
     model::ModelsWithMechanics,
     props, Δt,
     ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD,
-    args...
+    ::ForwardDiffAD
 )
     return Tensors.gradient(z -> 
-        pk1_stress(model, props, Δt, z, θ, Z_old, Z_new, ForwardDiffAD(), args...),
+        pk1_stress(model, props, Δt, z, θ, Z_old, Z_new, ForwardDiffAD()),
         ∇u
     )
 end
@@ -198,11 +186,10 @@ function pk1_stress(
     model::ModelsWithMechanics,
     props, Δt,
     ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD,
-    args...
+    ::ForwardDiffAD
 )
     return Tensors.gradient(z -> 
-        helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new, args...),
+        helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new),
         ∇u
     )
 end

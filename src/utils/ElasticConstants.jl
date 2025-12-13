@@ -74,7 +74,7 @@ function ElasticConstants(params::Dict{String})
             κ = E * μ / 3(3μ - E)
             λ = μ * (E - 2μ) / (3μ - E)
         else
-            norma_abort("Two elastic constants are required but only elastic modulus found")
+            elastic_constants_error("Two elastic constants are required but only elastic modulus found")
         end
     elseif haskey(params, "Poisson's ratio") == true
         ν = params["Poisson's ratio"]
@@ -94,7 +94,7 @@ function ElasticConstants(params::Dict{String})
             κ = 2μ * (1 + ν) / 3(1 - 2ν)
             λ = 2μ * ν / (1 - 2ν)
         else
-            norma_abort("Two elastic constants are required but only Poisson's ratio found")
+            elastic_constants_error("Two elastic constants are required but only Poisson's ratio found")
         end
     elseif haskey(params, "bulk modulus") == true
         κ = params["bulk modulus"]

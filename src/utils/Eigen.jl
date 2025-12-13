@@ -1,4 +1,4 @@
-@muladd begin
+# @muladd begin
 
 function cos_of_acos_divided_by_3(x)
     
@@ -285,4 +285,4 @@ end
 @implement_gradient log_safe dlog_safe
 @implement_gradient sqrt_safe dsqrt_safe
 
-end # muladd
+# end # muladd

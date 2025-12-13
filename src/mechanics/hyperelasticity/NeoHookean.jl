@@ -9,9 +9,7 @@ $(TYPEDSIGNATURES)
 """
 function initialize_props(::NeoHookean, inputs::Dict{String})
     elastic_props = ElasticConstants(inputs)
-    return Properties{2, eltype(elastic_props)}(
-        elastic_props.κ, elastic_props.μ
-    )
+    return [elastic_props.κ, elastic_props.μ]
 end
 
 """
@@ -31,13 +29,11 @@ function helmholtz_free_energy(
     I       = one(typeof(∇u))
     F       = ∇u + I
     J       = det(F)
-    # I_1_bar = tr(J^(-2. / 3.) * tdot(F))
     J_m_13  = 1. / cbrt(J)
     J_m_23  = J_m_13 * J_m_13
     I_1_bar = tr(J_m_23 * tdot(F))
 
     # constitutive
-    # ψ_vol = 0.5 * κ * (0.5 * (J * J - 1) - NaNMath.log(J))
     ψ_vol = 0.5 * κ * (0.5 * (J * J - 1) - log(J))
     ψ_dev = 0.5 * μ * (I_1_bar - 3.)
     ψ     = ψ_vol + ψ_dev
@@ -62,4 +58,4 @@ function pk1_stress(
               μ * J_m_23 * (F - (1. / 3.) * I_1 * F_inv_T)
   
     return P
-  end
+end

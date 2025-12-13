@@ -27,17 +27,18 @@ function initialize_state(
     ::AbstractConstitutiveModel{NP, NS},
     float_type = Float64
 ) where {NP, NS}
-    # return zero(SVector{NS, float_type})
-    return zeros(NS)
+    return zeros(float_type, NS)
 end
 
 @inline function unpack_props(
-    ::AbstractConstitutiveModel{NP1, NS},
-    props::SVector{NP2, T},
+    ::AbstractConstitutiveModel{NP, NS},
+    props,
     start_index::Int
-) where {NP1, NP2, NS, T <: Number}
-    indices = SVector{NP1, typeof(NP1)}(start_index:start_index + NP1 - 1)
-    return props[indices]
+# ) where {NP1, NP2, NS, T <: Number}
+) where {NP, NS}
+    # indices = SVector{NP1, typeof(NP1)}(start_index:start_index + NP1 - 1)
+    indices = start_index:(start_index + NP - 1)
+    return SVector{NP, eltype(props)}(@views props[indices])
 end
 
 # function unpack_state(

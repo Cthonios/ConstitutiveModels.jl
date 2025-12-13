@@ -12,19 +12,6 @@ function LinearElastoPlasticity(yield_surf_model::AbstractYieldSurface)
     )
 end
 
-# function LinearElastoPlasticity(inputs::Dict{String})
-#     yield_surf_type = eval(Meta.parse(inputs["yield surface"]))
-
-#     elastic_model = LinearElastic()
-#     yield_surf_model = yield_surf_type()
-#     n_props = num_properties(elastic_model) +
-#               num_properties(yield_surf_model)
-#     return LinearElastoPlasticity{n_props, typeof(yield_surf_model)}(
-#         elastic_model,
-#         yield_surf_model
-#     )
-# end
-
 function helmholtz_free_energy(
     model::LinearElastoPlasticity,
     props, Δt,
@@ -37,7 +24,8 @@ function helmholtz_free_energy(
     μ = elastic_props[2]
 
     # kinematics
-    ε = symmetric(∇u)
+    # ε = symmetric(∇u)
+    ε = linear_strain(∇u)
 
     # unpack state variables
     ε_p_old, α_old = unpack_state(model, Z_old)
@@ -76,27 +64,19 @@ function helmholtz_free_energy(
     ψ = ψ_e + ψ_hard
 
     # pack state
-    # Z = pack_state(model, ε_p_new, α_new)
     pack_state!(Z_new, model, ε_p_new, α_new)
 
     return ψ
 end
 
-function pack_state(::LinearElastoPlasticity, ε_p, α)
-    return SVector{7, eltype(ε_p)}(ε_p.data..., α)
-end
-
 function pack_state!(state, ::LinearElastoPlasticity, ε_p, α)
-    # display(ε_p)
-    # display(ForwardDiff.value.(ε_p.data) |> typeof)
-    state[1:6] .= ForwardDiff.value.(ε_p.data)
-    state[7] = ForwardDiff.value(α)
+    state[1:6] .= ForwardDiff.value.(ForwardDiff.value.(ε_p.data))
+    state[7] = ForwardDiff.value(ForwardDiff.value(α))
     return nothing
 end
 
 function unpack_state(::LinearElastoPlasticity, Z)
     # indices = SVector{6, Int}(1:6)
-    # ε_p = SymmetricTensor{2, 3, eltype(Z), 6}(Z[indices])
     ε_p = SymmetricTensor{2, 3, eltype(Z), 6}(@views Z[1:6])
     α = Z[7]
     return ε_p, α

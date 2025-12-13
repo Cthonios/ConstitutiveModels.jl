@@ -5,12 +5,12 @@ abstract type AbstractPlasticityModel{
     Y <: AbstractYieldSurface
 } <: AbstractMechanicalModel{NP, NS} end
 
-function elastic_properties(model::AbstractPlasticityModel, props::SVector)
+function elastic_properties(model::AbstractPlasticityModel, props)
     return unpack_props(model.elastic_model, props, 1)
 end
 
 # TODO do the same as above but for yield surface
-function yield_surface_properties(model::AbstractPlasticityModel, props::SVector)
+function yield_surface_properties(model::AbstractPlasticityModel, props)
     return unpack_props(model.yield_surface, props, 3)
 end
 
