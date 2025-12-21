@@ -12,7 +12,7 @@ function test_linear_elasto_plasticity_uniaxial_stress(model, inputs)
     # the test fails on stress equality
     # with cauchy stress as the method
     ∇us, σs, Zs = simulate_material_point(
-        pk1_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
     )
     εs = map(symmetric, ∇us)
     ε_xxs = map(x -> x[1, 1], εs)

@@ -20,18 +20,28 @@ end
 $(TYPEDSIGNATURES)
 """
 function helmholtz_free_energy(
+    model::Hencky,
+    props, Δt,
+    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new,
+    args...
+) where T <: Number
+    # kinematics
+    I = one(typeof(∇u))
+    F = ∇u + I
+    C = tdot(F)
+    return helmholtz_free_energy(model, props, Δt, C, θ, Z_old, Z_new)
+end
+
+function helmholtz_free_energy(
     ::Hencky,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    args...
-)
+    C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
+) where T <: Number
     # unpack properties
     κ, μ = props[1], props[2]
 
     # kinematics
-    I     = one(typeof(∇u))
-    F     = ∇u + I
-    E     = 0.5 * log_safe(tdot(F))
+    E     = 0.5 * log_safe(C)
     trE   = tr(E)
     E_dev = dev(E)
 
@@ -40,6 +50,22 @@ function helmholtz_free_energy(
     ψ_dev = μ * dcontract(E_dev, E_dev)
     ψ     = ψ_vol + ψ_dev
     return ψ
+end
+
+function pk2_stress(
+    model::Hencky,
+    props, Δt,
+    C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
+) where T <: Number
+    Tensors.gradient(z -> helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new), C)
+end
+
+function pk2_tangent(
+    model::Hencky,
+    props, Δt,
+    C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
+) where T <: Number
+    Tensors.hessian(z -> helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new), C)
 end
 
 # function cauchy_stress(

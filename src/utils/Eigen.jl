@@ -254,30 +254,30 @@ end
 end
 
 @inline _dlog(x) = one(x) / x
-# @inline _dpow(x, n) = n * NaNMath.pow(x, n - 1)
-@inline _dsqrt(x) = NaNMath.sqrt(x) / 2
+# @inline _dpow(x, n) = n * pow(x, n - 1)
+@inline _dsqrt(x) = sqrt(x) / 2
 
 @inline function log_safe(A)
   if A == one(A)
     return zero(A)
   else
-    return _matrix_function(NaNMath.log, A)
+    return _matrix_function(log, A)
   end
 end
 
 # for some reason, typing this makes the derivative not register
 @inline function sqrt_safe(A)
-  return _matrix_function(NaNMath.sqrt, A)
+  return _matrix_function(sqrt, A)
 end
 
 # Define known derivative
 @inline function dlog_safe(A::SymmetricTensor{2, D, T, N}) where{D, T <: Number, N}
-  logA, dlogA = _dmatrix_function(NaNMath.log, _dlog, A)
+  logA, dlogA = _dmatrix_function(log, _dlog, A)
   return logA, dlogA
 end
 
 @inline function dsqrt_safe(A::SymmetricTensor{2, D, T, N}) where{D, T <: Number, N}
-  sqrtA, dsqrtA = _dmatrix_function(NaNMath.sqrt, _dsqrt, A)
+  sqrtA, dsqrtA = _dmatrix_function(sqrt, _dsqrt, A)
   return sqrtA, dsqrtA
 end
 
