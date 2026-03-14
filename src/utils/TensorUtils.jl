@@ -18,8 +18,8 @@
 @inline function _convect_tangent(
     ℂ,                       # Tensor{4,3} or SymmetricTensor{4,3}: Lagrangian moduli
     S,                       # Tensor{2,3} or SymmetricTensor{2,3}: PK2 stress
-    F::Tensor{2,3, T},       # deformation gradient
-) where {T}
+    F::Tensor{2, 3, T, 9},   # deformation gradient
+) where {T <: Number}
     data = ntuple(Val(81)) do lin
         l, rem = divrem(lin - 1, 27)
         k, rem = divrem(rem,      9)
