@@ -26,7 +26,7 @@ function helmholtz_free_energy(
     κ, μ = props[1], props[2]
 
     # kinematics
-    I       = one(typeof(∇u))
+    I       = one(∇u)
     F       = ∇u + I
     J       = det(F)
     J_m_13  = 1. / cbrt(J)
@@ -46,7 +46,7 @@ function pk1_stress(
     ∇u, θ, Z_old, Z_new
 )
     κ, μ    = props[1], props[2]
-    F       = ∇u + one(typeof(∇u))
+    F       = ∇u + one(∇u)
     J       = det(F)
     J_m_13  = 1. / cbrt(J)
     J_m_23  = J_m_13 * J_m_13
@@ -73,7 +73,7 @@ function material_tangent(
     ∇u, θ, Z_old, Z_new
 )
     κ, μ  = props[1], props[2]
-    F     = ∇u + one(typeof(∇u))
+    F     = ∇u + one(∇u)
     J     = det(F)
     J2    = J * J
     C     = tdot(F)                          # F'F  (SymmetricTensor{2,3})
@@ -95,5 +95,5 @@ function material_tangent(
 
     ℂ = ℂ_vol + ℂ_dev
 
-    return _convect_tangent(ℂ, Tensor{2, 3, eltype(S), 9}(S), F)
+    return _convect_tangent(ℂ, S, F)
 end

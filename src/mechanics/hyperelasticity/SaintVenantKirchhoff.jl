@@ -38,7 +38,7 @@ function helmholtz_free_energy(
     ∇u, θ, Z_old, Z_new
 )
     λ, μ = props[1], props[2]
-    F    = ∇u + one(typeof(∇u))
+    F    = ∇u + one(∇u)
     C    = tdot(F)
     E    = 0.5 * (C - one(C))         # Green-Lagrange strain (SymmetricTensor{2,3})
     trE  = tr(E)
@@ -51,11 +51,12 @@ function pk1_stress(
     ∇u, θ, Z_old, Z_new
 )
     λ, μ = props[1], props[2]
-    F    = ∇u + one(typeof(∇u))
+    F    = ∇u + one(∇u)
     C    = tdot(F)
-    E    = 0.5 * (C - one(C))
-    S    = λ * tr(E) * one(E) + 2.0μ * E   # PK2
-    return F ⋅ S                             # PK1 = F S
+    I    = one(C)
+    E    = 0.5 * (C - I)
+    S    = λ * tr(E) * I + 2μ * E   # PK2
+    return F ⋅ S                    # PK1 = F S
 end
 
 # Analytical material tangent ∂P/∂F.
@@ -80,5 +81,5 @@ function material_tangent(
     ℂ    = λ * otimes(I2, I2) +
            μ * (otimesu(I2, I2) + otimesl(I2, I2))  # = λ I⊗I + 2μ I⊙I
 
-    return _convect_tangent(ℂ, Tensor{2, 3, eltype(S), 9}(S), F)
+    return _convect_tangent(ℂ, S, F)
 end
