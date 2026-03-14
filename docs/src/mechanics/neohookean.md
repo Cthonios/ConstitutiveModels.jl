@@ -42,9 +42,9 @@ function neohookean_pure_shear_strain()
     ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
 
     μ = props[2]
-    σ_11s_an = (μ / 3.) * (0.5 * (λs.^2 .+ λs.^(-2)) .- 1.)
-    σ_33s_an = (μ / 3.) * (2. .- λs.^2 .+ λs.^(-2))
-    σ_12s_an = (μ / 2.) * (λs.^2 .- λs.^(-2))
+    σ_11s_an = (μ / 3) * (0.5 * (λs.^2 .+ λs.^(-2)) .- 1)
+    σ_33s_an = (μ / 3) * (2 .- λs.^2 .- λs.^(-2))
+    σ_12s_an = (μ / 2) * (λs.^2 .- λs.^(-2))
 
     plot(motion, ∇us, σs, Zs, σ_11s_an, σ_33s_an, σ_12s_an)
 end
