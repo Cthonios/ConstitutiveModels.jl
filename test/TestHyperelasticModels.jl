@@ -1,7 +1,13 @@
-function _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+function _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
     As_ad = material_tangent.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,), (ConstitutiveModels.ForwardDiffAD(),))
     As_an = material_tangent.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
-    @test all(map((x, y) -> x ≈ y, As_ad, As_an))
+    @test all(map((x, y) -> isapprox(x, y, atol = 1e-10, rtol = 1e-10), As_ad, As_an))
+end
+
+function _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    Ps_ad = pk1_stress.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,), (ConstitutiveModels.ForwardDiffAD(),))
+    Ps_an = pk1_stress.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(map((x, y) -> isapprox(x, y, atol = 1e-10, rtol = 1e-10), Ps_ad, Ps_an))
 end
 
 #########################################################
@@ -26,6 +32,8 @@ function test_gent_simple_shear(model, inputs)
     σ_yy_an = -(1. / 3.) * Jm * μ * γs.^2 ./ (Jm .- γs.^2)
     σ_xy_an = Jm * μ * γs ./ (Jm .- γs.^2)
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an, σ_xy_an)
+
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_gent_uniaxial_strain(model, inputs)
@@ -49,6 +57,8 @@ function test_gent_uniaxial_strain(model, inputs)
               (1. / 3.) * Jm * μ .* (λs.^2 .- 1.) ./
               (λs.^3 - (Jm + 3) * λs.^(5. / 3.) + 2. * λs)
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an; rtol=1e-7)
+
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_gent()
@@ -88,6 +98,8 @@ function test_hencky_uniaxial_strain(model, inputs)
     σ_xx_an = (λ * εs .+ 2 * μ * εs) ./ λs
     σ_yy_an = (λ * εs) ./ λs
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
+
+    # _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_hencky()
@@ -207,7 +219,8 @@ function test_neohookean_pure_shear_strain(model, inputs)
     σ_xy_an = (μ / 2) * (λs.^2 .- λs.^(-2))
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an, σ_zz_an, σ_xy_an)
 
-    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_neohookean_simple_shear(model, inputs)
@@ -234,7 +247,8 @@ function test_neohookean_simple_shear(model, inputs)
     σ_xy_an = μ * γs
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an, σ_xy_an)
 
-    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_neohookean_uniaxial_strain(model, inputs)
@@ -262,7 +276,8 @@ function test_neohookean_uniaxial_strain(model, inputs)
               (1. / 3.) * μ .* (λs.^2 .- 1.) .* λs .^ (-5. / 3.)
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
 
-    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_neohookean()
@@ -307,7 +322,8 @@ function test_saint_venant_kirchoff_simple_shear(model, inputs)
     σ_xy_an = μ .* γs .+ 0.5 .* (λ .+ 2μ) .* γs.^3
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an, σ_zz_an, σ_xy_an)
 
-    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_saint_venant_kirchoff_uniaxial_strain(model, inputs)
@@ -334,7 +350,8 @@ function test_saint_venant_kirchoff_uniaxial_strain(model, inputs)
     σ_yy_an = 0.5 .* λ .* (λs.^2 .- 1) ./ λs
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
 
-    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_saint_venant_kirchoff()
@@ -347,12 +364,111 @@ function test_saint_venant_kirchoff()
     test_saint_venant_kirchoff_uniaxial_strain(model, inputs)
 end
 
+function test_seth_hill_simple_shear(model, inputs)
+    props = initialize_props(model, inputs)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
+    Δt = 0.0
+    θ = 0.0
+
+    motion = SimpleShear()
+    γs = LinRange(0.0, 0.5, 101)
+
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs
+    )
+
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
+end
+
+function test_seth_hill_uniaxial_strain(model, inputs)
+    props = initialize_props(model, inputs)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
+    Δt = 0.0
+    θ = 0.0
+
+    motion = UniaxialStrain()
+    λs = LinRange(0.25, 4., 101)
+
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
+    )
+    # λ, μ = props[1], props[2]
+    κ, μ, m, n = props[1], props[2], props[3], props[4]
+
+    Js = λs
+    # volumetric energy
+    ψs_vol = κ / (4 * m^2) * ((Js.^m .- 1).^2 .+ (Js.^(-m) .- 1).^2)
+
+    # isochoric right Cauchy-Green
+    C_xx = λs.^2
+    C_yy = 1 .^2
+    C_zz = 1 .^2
+    Jm23 = Js.^(-2/3)
+    Cbar_xx = C_xx .* Jm23
+    Cbar_yy = C_yy .* Jm23
+    Cbar_zz = C_zz .* Jm23
+
+    # Deviatoric invariants
+    trCbar_n    = Cbar_xx.^n .+ Cbar_yy.^n .+ Cbar_zz.^n
+    trCbar_invn = Cbar_xx.^(-n) .+ Cbar_yy.^(-n) .+ Cbar_zz.^(-n)
+    trCbar_2n   = Cbar_xx.^(2n) .+ Cbar_yy.^(2n) .+ Cbar_zz.^(2n)
+    trCbar_inv2 = Cbar_xx.^(-2n) .+ Cbar_yy.^(-2n) .+ Cbar_zz.^(-2n)
+
+    ψs_dev = μ / (4 * n^2) .* (trCbar_2n .+ trCbar_inv2 .- 2*trCbar_n .- 2*trCbar_invn .+ 6)
+
+    ψs_an = ψs_vol + ψs_dev
+    ψs = helmholtz_free_energy.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(ψs_an .≈ ψs)
+
+    # _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
+end
+
+function test_seth_hill()
+    inputs_neohookean = Dict(
+        "Young's modulus" => 1.0,
+        "Poisson's ratio" => 0.3,
+        "m"               => 1,
+        "n"               => 1
+    )
+    inputs_1_2 = Dict(
+        "Young's modulus" => 1.0,
+        "Poisson's ratio" => 0.3,
+        "m"               => 1,
+        "n"               => 2
+    )
+    inputs_2_1 = Dict(
+        "Young's modulus" => 1.0,
+        "Poisson's ratio" => 0.3,
+        "m"               => 2,
+        "n"               => 1
+    )
+    inputs_2_2 = Dict(
+        "Young's modulus" => 1.0,
+        "Poisson's ratio" => 0.3,
+        "m"               => 2,
+        "n"               => 2
+    )
+    model = SethHill()
+    test_seth_hill_simple_shear(model, inputs_neohookean)
+    test_seth_hill_uniaxial_strain(model, inputs_neohookean)
+
+    test_seth_hill_simple_shear(model, inputs_1_2)
+    test_seth_hill_uniaxial_strain(model, inputs_1_2)
+
+    test_seth_hill_simple_shear(model, inputs_2_1)
+    test_seth_hill_uniaxial_strain(model, inputs_2_1)
+end
+
 function test_hyperelastic_models()
     test_gent()
     test_hencky()
     test_linear_elastic()
     test_neohookean()
     test_saint_venant_kirchoff()
+    test_seth_hill()
 end
 
 test_hyperelastic_models()
