@@ -33,12 +33,13 @@ function neohookean_pure_shear_strain()
     props = initialize_props(model, inputs)
     Δt = 0.0
     θ = 0.0
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
 
     λs = LinRange(1., 1.25, 101)
     motion = PureShearStrain{Float64}()
 
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z, motion, λs)
+    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
 
     μ = props[2]
     σ_11s_an = (μ / 3.) * (0.5 * (λs.^2 .+ λs.^(-2)) .- 1.)
@@ -78,12 +79,13 @@ function neohookean_simple_shear()
     props = initialize_props(model, inputs)
     Δt = 0.0
     θ = 0.0
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
 
     γs = LinRange(0., 1., 101)
     motion = SimpleShear{Float64}()
 
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z, motion, γs)
+    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs)
 
     μ = props[2]
     σ_11s_an = (2. / 3.) * μ * γs.^2
@@ -121,12 +123,13 @@ function neohookean_uniaxial_strain()
     props = initialize_props(model, inputs)
     Δt = 0.0
     θ = 0.0
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
 
     λs = LinRange(1., 4., 101)
     motion = UniaxialStrain{Float64}()
 
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z, motion, λs)
+    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
 
     κ, μ = props[1], props[2]
 
@@ -156,7 +159,7 @@ Here is a comparison of an analytic solution to the uniaxial stress boundary val
 using ConstitutiveModels
 using Plots
 
-function neohookean_uniaxial_strain()
+function neohookean_uniaxial_stress()
     inputs = Dict(
         "Young's modulus" => 1.0,#u"MPa",
         "Poisson's ratio" => 0.3
@@ -166,12 +169,13 @@ function neohookean_uniaxial_strain()
     props = initialize_props(model, inputs)
     Δt = 0.0
     θ = 0.0
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
 
     λs = LinRange(1., 4., 101)
     motion = UniaxialStressDisplacementControl{Float64}()
 
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z, motion, λs)
+    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
 
     κ, μ = props[1], props[2]
 
@@ -182,5 +186,5 @@ function neohookean_uniaxial_strain()
 
     plot(motion, ∇us, σs, Zs)#, σ_11s_an, σ_22s_an)
 end
-neohookean_uniaxial_strain()
+neohookean_uniaxial_stress()
 ```

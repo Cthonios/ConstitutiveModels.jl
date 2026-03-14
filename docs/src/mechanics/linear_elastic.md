@@ -25,12 +25,13 @@ function linearelastic_simple_shear()
     props = initialize_props(model, inputs)
     Δt = 0.0
     θ = 0.0
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
 
     γs = LinRange(0., 0.01,101)
     motion = SimpleShear{Float64}()
 
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z, motion, γs)
+    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs)
 
     μ = props[2]
     σ_11s_an = 0. * γs
@@ -62,13 +63,14 @@ function linearelastic_uniaxial_strain()
     props = initialize_props(model, inputs)
     Δt = 0.0
     θ = 0.0
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
 
     λs = LinRange(1., 1.001, 101)
     motion = UniaxialStrain{Float64}()
 
     # hardcoded parameters for simple models
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z, motion, λs)
+    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
 
     λ, μ = props[1], props[2]
     σ_11s_an = λ * (λs .- 1.) .+ 2. * μ * (λs .- 1.)

@@ -22,13 +22,15 @@ makedocs(;
     pages=[
         "Home"               => "index.md",
         "Notation"           => "notation.md",
-        # "Mechanical Models"  => "mechanical_models.md",
         "Mechanicals Models" => [
             "mechanics/mechanical_models.md",
+            "mechanics/finite_def_j2_plasticity.md",
             "mechanics/gent.md",
             "mechanics/hencky.md",
             "mechanics/linear_elastic.md",
-            "mechanics/neohookean.md"
+            "mechanics/neohookean.md",
+            "mechanics/saint_venant_kirchoff.md",
+            "mechanics/seth_hill.md"
         ],
         "Thermal Models"     => "thermal_models.md",
         "Abstract Interface" => "abstract_interface.md",

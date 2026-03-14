@@ -239,7 +239,7 @@ end
 
 function test_neohookean()
     inputs = Dict(
-        "Young's modulus" => 1.0e6,
+        "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3
     )
     model = NeoHookean()

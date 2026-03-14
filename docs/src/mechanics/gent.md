@@ -34,12 +34,13 @@ function gent_simple_shear()
     props = initialize_props(model, inputs)
     Δt = 0.0
     θ = 0.0
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
 
     γs = LinRange(0., 1., 101)
     motion = SimpleShear{Float64}()
 
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z, motion, γs)
+    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs)
 
     μ, Jm = props[2], props[3]
     σ_11s_an = (2. / 3.) * Jm * μ * γs.^2 ./ (Jm .- γs.^2)
@@ -78,12 +79,13 @@ function gent_uniaxial_strain()
     props = initialize_props(model, inputs)
     Δt = 0.0
     θ = 0.0
-    Z = initialize_state(model)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
 
     λs = LinRange(1., 4., 101)
     motion = UniaxialStrain{Float64}()
 
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z, motion, λs)
+    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
 
     κ, μ, Jm = props[1], props[2], props[3]
 
