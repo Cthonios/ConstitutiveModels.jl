@@ -14,13 +14,16 @@ export cauchy_stress,
 export ArrudaBoyce,
        Gent,
        Hencky,
-       LinearElastic, 
-       NeoHookean
+       LinearElastic,
+       NeoHookean,
+       SaintVenantKirchhoff,
+       SethHill
 export LinearIsotropicHardening,
        NoIsotropicHardening
 export TrescaYieldSurface,
        VonMisesYieldSurface
-export LinearElastoPlasticity
+export LinearElastoPlasticity,
+       FiniteDefJ2Plasticity
 export LinearThermoElastic
 export deformation_gradient,
        displacement_gradient,
@@ -45,6 +48,7 @@ using Tensors
 include("utils/Eigen.jl")
 include("utils/ElasticConstants.jl")
 include("utils/Kinematics.jl")
+include("utils/TensorUtils.jl")
 include("utils/solvers/NewtonSolver.jl")
 include("Interface.jl")
 

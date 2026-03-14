@@ -1,12 +1,13 @@
 name = "ConstitutiveModels"
 uuid = "fc6ee7eb-129a-416f-804b-d7271ece6a3a"
-authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
 version = "0.3.1"
+authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
 
 [deps]
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 InverseLangevinApproximations = "b82787f2-62be-403e-9078-6d9feafd7ee3"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Tensors = "48a634ad-e948-5137-8d70-aa71f2a747f4"
@@ -24,6 +25,7 @@ DocStringExtensions = "0.9"
 ForwardDiff = "1"
 InverseLangevinApproximations = "0.2"
 LaTeXStrings = "1"
+LinearAlgebra = "1"
 RecipesBase = "1"
 Roots = "2"
 StaticArrays = "1"

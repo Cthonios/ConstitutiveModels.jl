@@ -41,12 +41,11 @@ function helmholtz_free_energy(
 end
 
 function pk1_stress(
-    ::NeoHookean, 
-    props, Δt, 
+    ::NeoHookean,
+    props, Δt,
     ∇u, θ, Z_old, Z_new,
     ::ForwardDiffAD
-  )
-  
+)
     κ, μ    = props[1], props[2]
     F       = ∇u + one(typeof(∇u))
     J       = det(F)
@@ -54,8 +53,49 @@ function pk1_stress(
     J_m_23  = J_m_13 * J_m_13
     I_1     = tr(tdot(F))
     F_inv_T = inv(F)'
-    P       = 0.5 * κ * (J * J - 1.) * F_inv_T + 
+    P       = 0.5 * κ * (J * J - 1.) * F_inv_T +
               μ * J_m_23 * (F - (1. / 3.) * I_1 * F_inv_T)
-  
     return P
+end
+
+# Analytical material tangent ∂P/∂F.
+#
+# Strategy: assemble the Lagrangian moduli ℂ = 2 ∂S/∂C (Norma convention) in
+# terms of C⁻¹ outer products, then push forward via _convect_tangent.
+#
+# Volumetric:  ℂ_vol = κ [ J²(C⁻¹⊗C⁻¹) − (J²−1)(C⁻¹⊙C⁻¹) ]
+# Deviatoric:  ℂ_dev = (2μ J⁻²/³/3) [ tr(C)(C⁻¹⊗C⁻¹/3 + C⁻¹⊙C⁻¹)
+#                                       − I⊗C⁻¹ − C⁻¹⊗I ]
+# where ⊙ is the minor-symmetrized outer product
+#   (A⊙B)_{ijkl} = ½(A_{ik}B_{jl} + A_{il}B_{jk})
+function material_tangent(
+    ::NeoHookean,
+    props, Δt,
+    ∇u, θ, Z_old, Z_new,
+    ::ForwardDiffAD
+)
+    κ, μ  = props[1], props[2]
+    F     = ∇u + one(typeof(∇u))
+    J     = det(F)
+    J2    = J * J
+    C     = tdot(F)                          # F'F  (SymmetricTensor{2,3})
+    IC    = inv(C)                           # C⁻¹  (SymmetricTensor{2,3})
+    I2    = one(IC)                          # identity (SymmetricTensor{2,3})
+    trC   = tr(C)
+    Jm23  = cbrt(J)^(-2)
+
+    # PK2 stress (needed for geometric stiffness in _convect_tangent)
+    S = (0.5κ * (J2 - 1.0)) * IC + μ * Jm23 * (I2 - (trC / 3.0) * IC)
+
+    # Lagrangian moduli  ℂ = 2 ∂S/∂C
+    ICxIC  = otimes(IC, IC)                          # C⁻¹ ⊗ C⁻¹
+    ICodIC = 0.5 * (otimesu(IC, IC) + otimesl(IC, IC))  # C⁻¹ ⊙ C⁻¹
+    ℂ_vol  = κ * (J2 * ICxIC - (J2 - 1.0) * ICodIC)
+
+    coeff  = 2.0μ * Jm23 / 3.0
+    ℂ_dev  = coeff * (trC * (ICxIC / 3.0 + ICodIC) - otimes(IC, I2) - otimes(I2, IC))
+
+    ℂ = ℂ_vol + ℂ_dev
+
+    return _convect_tangent(ℂ, Tensor{2, 3}(S), F)
 end

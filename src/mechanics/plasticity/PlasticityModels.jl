@@ -22,3 +22,4 @@ end
 
 include("FeFp.jl")
 include("LinearElastoPlasticity.jl")
+include("FiniteDefJ2Plasticity.jl")
