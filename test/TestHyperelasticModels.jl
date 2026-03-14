@@ -1,3 +1,9 @@
+function _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    As_ad = material_tangent.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,), (ConstitutiveModels.ForwardDiffAD(),))
+    As_an = material_tangent.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(map((x, y) -> x ≈ y, As_ad, As_an))
+end
+
 #########################################################
 # Gent
 #########################################################
@@ -190,10 +196,17 @@ function test_neohookean_simple_shear(model, inputs)
         cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs
     )
     κ, μ = props[1], props[2]
+
+    ψs_an = 0.5 * μ * γs.^2
+    ψs = helmholtz_free_energy.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(ψs_an .≈ ψs)
+
     σ_xx_an = (2. / 3.) * μ * γs.^2
     σ_yy_an = -(1. / 3.) * μ * γs.^2
     σ_xy_an = μ * γs
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an, σ_xy_an)
+
+    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_neohookean_uniaxial_strain(model, inputs)
@@ -210,11 +223,18 @@ function test_neohookean_uniaxial_strain(model, inputs)
         cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
     )
     κ, μ = props[1], props[2]
+
+    ψs_an = 0.5 * κ * (0.5 * (λs .* λs .- 1) .- log.(λs)) + 0.5 * μ * (λs.^(-2. / 3.) .* (λs.^2 .+ 2) .- 3)
+    ψs = helmholtz_free_energy.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(ψs_an .≈ ψs)
+
     σ_xx_an = 0.5 * κ .* (λs .- 1. ./ λs) +
               (2. / 3.) * μ .* (λs.^2 .- 1.) .* λs .^ (-5. / 3.)
     σ_yy_an = 0.5 * κ .* (λs .- 1. ./ λs) -
               (1. / 3.) * μ .* (λs.^2 .- 1.) .* λs .^ (-5. / 3.)
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
+
+    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_neohookean()
