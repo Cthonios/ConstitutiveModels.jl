@@ -17,7 +17,7 @@ function test_strain_eq(::UniaxialStressDisplacementControl, εs, ε_xx_ans, ε_
     end
 end
 
-function test_stress_eq(::SimpleShear, σs, σ_xx_ans, σ_yy_ans, σ_xy_ans; atol=1e-10, rtol=1e-10)
+function test_stress_eq(::M, σs, σ_xx_ans, σ_yy_ans, σ_xy_ans; atol=1e-10, rtol=1e-10) where M <: Union{PureShearStrain, SimpleShear}
     @assert length(σs) == length(σ_xx_ans)
     @assert length(σs) == length(σ_yy_ans)
     @assert length(σs) == length(σ_xy_ans)
@@ -31,7 +31,7 @@ function test_stress_eq(::SimpleShear, σs, σ_xx_ans, σ_yy_ans, σ_xy_ans; ato
     end
 end
 
-function test_stress_eq(::SimpleShear, σs, σ_xx_ans, σ_yy_ans, σ_zz_ans, σ_xy_ans; atol=1e-10, rtol=1e-10)
+function test_stress_eq(::M, σs, σ_xx_ans, σ_yy_ans, σ_zz_ans, σ_xy_ans; atol=1e-10, rtol=1e-10) where M <: Union{PureShearStrain, SimpleShear}
     @assert length(σs) == length(σ_xx_ans)
     @assert length(σs) == length(σ_yy_ans)
     @assert length(σs) == length(σ_zz_ans)

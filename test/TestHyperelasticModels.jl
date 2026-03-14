@@ -182,6 +182,34 @@ end
 # NeoHookean
 #########################################################
 
+function test_neohookean_pure_shear_strain(model, inputs)
+    props = initialize_props(model, inputs)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
+    Δt = 0.0
+    θ = 0.0
+
+    λs = LinRange(1., 1.25, 101)
+    motion = PureShearStrain{Float64}()
+
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
+    )
+    κ, μ = props[1], props[2]
+
+    ψs_an = 0.5 .* μ .* (λs.^2 .+ λs.^(-2) .- 2)
+    ψs = helmholtz_free_energy.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(ψs_an .≈ ψs)
+
+    σ_xx_an = (μ / 3) * (0.5 * (λs.^2 .+ λs.^(-2)) .- 1)
+    σ_yy_an = (μ / 3) * (0.5 * (λs.^2 .+ λs.^(-2)) .- 1)
+    σ_zz_an = (μ / 3) * (2 .- λs.^2 .- λs.^(-2))
+    σ_xy_an = (μ / 2) * (λs.^2 .- λs.^(-2))
+    test_stress_eq(motion, σs, σ_xx_an, σ_yy_an, σ_zz_an, σ_xy_an)
+
+    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+end
+
 function test_neohookean_simple_shear(model, inputs)
     props = initialize_props(model, inputs)
     Z_old = initialize_state(model)
@@ -243,6 +271,7 @@ function test_neohookean()
         "Poisson's ratio" => 0.3
     )
     model = NeoHookean()
+    test_neohookean_pure_shear_strain(model, inputs)
     test_neohookean_simple_shear(model, inputs)
     test_neohookean_uniaxial_strain(model, inputs)
 end
