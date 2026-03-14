@@ -247,11 +247,83 @@ function test_neohookean()
     test_neohookean_uniaxial_strain(model, inputs)
 end
 
+#########################################################
+# Saint Venant-Kirchoff
+#########################################################
+
+function test_saint_venant_kirchoff_simple_shear(model, inputs)
+    props = initialize_props(model, inputs)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
+    Δt = 0.0
+    θ = 0.0
+
+    motion = SimpleShear()
+    γs = LinRange(0.0, 0.5, 101)
+
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs
+    )
+    λ, μ = props[1], props[2]
+
+    ψs_an = 0.5 .* μ .* γs.^2 .+
+            0.25 .* μ .* γs.^4 .+
+            0.125 .* λ .* γs.^4
+    ψs = helmholtz_free_energy.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(ψs_an .≈ ψs)
+
+    σ_xx_an = (2μ + 0.5λ) .* γs.^2 .+ (μ + 0.5λ) .* γs.^4
+    σ_yy_an = (μ + 0.5λ) .* γs.^2
+    σ_zz_an = 0.5λ .* γs.^2
+    σ_xy_an = μ .* γs .+ 0.5 .* (λ .+ 2μ) .* γs.^3
+    test_stress_eq(motion, σs, σ_xx_an, σ_yy_an, σ_zz_an, σ_xy_an)
+
+    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+end
+
+function test_saint_venant_kirchoff_uniaxial_strain(model, inputs)
+    props = initialize_props(model, inputs)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
+    Δt = 0.0
+    θ = 0.0
+
+    motion = UniaxialStrain()
+    λs = LinRange(0.25, 4., 101)
+
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
+    )
+    λ, μ = props[1], props[2]
+
+    ψs_an = 0.125 .* λ .* (λs.^2 .- 1).^2 .+
+            0.25  .* μ .* (λs.^2 .- 1).^2
+    ψs = helmholtz_free_energy.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(ψs_an .≈ ψs)
+
+    σ_xx_an = 0.5 .* (λ + 2μ) .* λs .* (λs.^2 .- 1)
+    σ_yy_an = 0.5 .* λ .* (λs.^2 .- 1) ./ λs
+    test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
+
+    _test_ad_equal_analytic_for_hyper(model, props, Δt, ∇us, θ, Z_old, Z_new)
+end
+
+function test_saint_venant_kirchoff()
+    inputs = Dict(
+        "Young's modulus" => 1.0,
+        "Poisson's ratio" => 0.3
+    )
+    model = SaintVenantKirchhoff()
+    test_saint_venant_kirchoff_simple_shear(model, inputs)
+    test_saint_venant_kirchoff_uniaxial_strain(model, inputs)
+end
+
 function test_hyperelastic_models()
     test_gent()
     test_hencky()
     test_linear_elastic()
     test_neohookean()
+    test_saint_venant_kirchoff()
 end
 
 test_hyperelastic_models()
