@@ -261,8 +261,7 @@ end
 function pk1_stress(
     ::FiniteDefJ2Plasticity,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     F_ten = Tensor{2,3,Float64}(∇u) + one(Tensor{2,3,Float64})
     F_sa  = SMatrix{3,3,Float64,9}(F_ten)
@@ -274,8 +273,7 @@ end
 function material_tangent(
     ::FiniteDefJ2Plasticity,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     F_ten = Tensor{2,3,Float64}(∇u) + one(Tensor{2,3,Float64})
     F_sa  = SMatrix{3,3,Float64,9}(F_ten)

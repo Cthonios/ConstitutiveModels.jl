@@ -84,8 +84,8 @@ function pk1_stress(
     P_vol = κ / (2m) * (J2m - Jm - Jm2m + Jmm) * F_inv_T
 
     scalar = (1 / 3) * (-trCbar2n + trCbarn + trCbarm2n - trCbarmn)
-    combo  = Tensor{2,3}(Cbar2n) - Tensor{2,3}(Cbarn) -
-             Tensor{2,3}(Cbarm2n) + Tensor{2,3}(Cbarmn)
+    combo  = Tensor{2, 3, eltype(Cbar2n), 9}(Cbar2n) - Tensor{2, 3, eltype(Cbarn), 9}(Cbarn) -
+             Tensor{2, 3, eltype(Cbarm2n), 9}(Cbarm2n) + Tensor{2, 3, eltype(Cbarmn), 9}(Cbarmn)
     P_dev  = μ / n * (scalar * F_inv_T + F_inv_T ⋅ combo)
 
     return P_vol + P_dev
