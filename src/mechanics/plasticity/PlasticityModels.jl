@@ -20,6 +20,5 @@ function initialize_props(model::AbstractPlasticityModel, inputs::Dict{String})
     return vcat(elastic_props, yield_surf_props)
 end
 
-include("FeFp.jl")
 include("LinearElastoPlasticity.jl")
 include("FiniteDefJ2Plasticity.jl")

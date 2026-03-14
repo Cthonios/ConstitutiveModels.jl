@@ -43,8 +43,7 @@ end
 function pk1_stress(
     ::NeoHookean,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     κ, μ    = props[1], props[2]
     F       = ∇u + one(typeof(∇u))
@@ -71,8 +70,7 @@ end
 function material_tangent(
     ::NeoHookean,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     κ, μ  = props[1], props[2]
     F     = ∇u + one(typeof(∇u))
@@ -97,5 +95,5 @@ function material_tangent(
 
     ℂ = ℂ_vol + ℂ_dev
 
-    return _convect_tangent(ℂ, Tensor{2, 3}(S), F)
+    return _convect_tangent(ℂ, Tensor{2, 3, eltype(S), 9}(S), F)
 end

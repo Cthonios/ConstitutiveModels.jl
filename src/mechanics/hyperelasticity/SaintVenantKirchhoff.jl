@@ -48,8 +48,7 @@ end
 function pk1_stress(
     ::SaintVenantKirchhoff,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     λ, μ = props[1], props[2]
     F    = ∇u + one(typeof(∇u))
@@ -69,8 +68,7 @@ end
 function material_tangent(
     ::SaintVenantKirchhoff,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     λ, μ = props[1], props[2]
     F    = ∇u + one(typeof(∇u))
@@ -82,5 +80,5 @@ function material_tangent(
     ℂ    = λ * otimes(I2, I2) +
            μ * (otimesu(I2, I2) + otimesl(I2, I2))  # = λ I⊗I + 2μ I⊙I
 
-    return _convect_tangent(ℂ, Tensor{2, 3}(S), F)
+    return _convect_tangent(ℂ, Tensor{2, 3, eltype(S), 9}(S), F)
 end
