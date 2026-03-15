@@ -88,35 +88,38 @@ function test_hencky_uniaxial_strain(model, inputs)
     ∇us, σs, _ = simulate_material_point(
         cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
     )
-    # εs = λs .- 1.
+
+    εs = λs .- 1
     εs = log.(λs)
     κ, μ = props[1], props[2]
-    λ = κ - (2. / 3.) * μ
-    # σ_xx_an = (λ * εs .+ 2. * μ * εs) ./ λs
-    # σ_xx_an = (κ * εs .+ (4. / 3.) * μ * εs) / λs
-    # σ_yy_an = λ * εs
-    σ_xx_an = (λ * εs .+ 2 * μ * εs) ./ λs
-    σ_yy_an = (λ * εs) ./ λs
-    test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
+    # trεs = 
+
+    # εs = λs .- 1.
+    # εs = log.(λs)
+    # κ, μ = props[1], props[2]
+    # λ = κ - (2. / 3.) * μ
+    # # σ_xx_an = (λ * εs .+ 2. * μ * εs) ./ λs
+    # # σ_xx_an = (κ * εs .+ (4. / 3.) * μ * εs) / λs
+    # # σ_yy_an = λ * εs
+    # σ_xx_an = (λ * εs .+ 2 * μ * εs) ./ λs
+    # σ_yy_an = (λ * εs) ./ λs
+    # test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
 
     # _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_hencky()
     inputs = Dict(
-        "Young's modulus" => 70.0e9,
+        "Young's modulus" => 70.0e3,
         "Poisson's ratio" => 0.3
     )
     model = Hencky()
-    # test_linear_elastic_simple_shear(model, inputs)
-    # test_linear_elastic_uniaxial_strain(model, inputs)
-    # test_linear_elastic_uniaxial_stress(model, inputs)
+    test_hencky_uniaxial_strain(model, inputs)
 end
 
 #########################################################
 # LinearElastic
 #########################################################
-
 function test_linear_elastic_simple_shear(model, inputs)
     props = initialize_props(model, inputs)
     Z_old = initialize_state(model)
@@ -193,7 +196,99 @@ end
 #########################################################
 # NeoHookean
 #########################################################
+function test_mooney_rivlin_simple_shear(model, inputs)
+    props = initialize_props(model, inputs)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
+    Δt = 0.0
+    θ = 0.0
 
+    motion = SimpleShear()
+    γs = LinRange(0.0, 0.5, 101)
+
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs
+    )
+    _, C1, C2 = props
+
+    # analytical Helmholtz free energy (isochoric invariants: I1_bar = I2_bar = 3 + γ^2)
+    ψs_an = (C1 + C2) .* γs.^2
+    ψs = helmholtz_free_energy.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(ψs_an .≈ ψs)
+
+    # analytical Cauchy stress components
+    σ_xy_an = 2 * (C1 + C2) .* γs
+    σ_xx_an = (2/3) * (C1 + C2) .* γs.^2
+    σ_yy_an = -(1/3) * (C1 + C2) .* γs.^2
+
+    test_stress_eq(motion, σs, σ_xx_an, σ_yy_an, σ_xy_an)
+
+    _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
+end
+
+function test_mooney_rivlin_uniaxial_strain(model, inputs)
+    props = initialize_props(model, inputs)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
+    Δt = 0.0
+    θ = 0.0
+
+    motion = UniaxialStrain()
+    λs = LinRange(0.25, 4., 101)
+
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
+    )
+    κ, C1, C2 = props[1], props[2], props[3]
+
+    # analytical Helmholtz free energy
+    J = λs
+    J_m_13 = 1.0 ./ cbrt.(J)
+    J_m_23 = J_m_13 .* J_m_13
+    J_m_43 = J_m_23 .* J_m_23
+    I1 = λs.^2 .+ 2
+    I2 = 0.5 * (I1.^2 .- λs.^4 .- 2.)
+    I1_bar = J_m_23 .* I1
+    I2_bar = J_m_23 .* J_m_23 .* 0.5 .* (I1.^2 .- (λs.^4 .+ 2))
+    ψs_an = 0.5 * κ * (0.5 * (J.^2 .- 1) .- log.(J)) .+ C1 .* (I1_bar .- 3) .+ C2 .* (I2_bar .- 3)
+    
+    ψs = helmholtz_free_energy.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    @test all(ψs_an .≈ ψs)
+
+    # TODO
+    # analytical Cauchy stress components (compressible uniaxial)
+    σ_xx_an = 0.5 * κ .* (λs .- 1. ./ λs) +
+          (2/3) * 2C1 .* (λs.^2 .- 1.) .* λs.^(-5/3) +
+          (4/3) * C2 .* (λs.^2 .- 1.) .* λs.^(-7/3)
+
+    σ_yy_an = 0.5 * κ .* (λs .- 1. ./ λs) -
+          (1/3) * 2C1 .* (λs.^2 .- 1.) .* λs.^(-5/3) -
+          (2/3) * C2 .* (λs.^2 .- 1.) .* λs.^(-7/3)
+
+    test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
+
+    # check AD vs analytic tangent and PK1 stress
+    # _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
+end
+
+function test_mooney_rivlin()
+    inputs = Dict(
+        "Young's modulus" => 1.0,
+        "Poisson's ratio" => 0.3,
+        "C1"              => 0.5,
+        "C2"              => 0.5
+    )
+    model = MooneyRivlin()
+    # test_mooney_rivlin_simple_shear(model, inputs)
+    test_mooney_rivlin_uniaxial_strain(model, inputs)
+end
+
+
+#########################################################
+# NeoHookean
+#########################################################
 function test_neohookean_pure_shear_strain(model, inputs)
     props = initialize_props(model, inputs)
     Z_old = initialize_state(model)
@@ -458,14 +553,15 @@ function test_seth_hill()
     test_seth_hill_simple_shear(model, inputs_1_2)
     test_seth_hill_uniaxial_strain(model, inputs_1_2)
 
-    test_seth_hill_simple_shear(model, inputs_2_1)
-    test_seth_hill_uniaxial_strain(model, inputs_2_1)
+    test_seth_hill_simple_shear(model, inputs_2_2)
+    test_seth_hill_uniaxial_strain(model, inputs_2_2)
 end
 
 function test_hyperelastic_models()
     test_gent()
     test_hencky()
     test_linear_elastic()
+    test_mooney_rivlin()
     test_neohookean()
     test_saint_venant_kirchoff()
     test_seth_hill()

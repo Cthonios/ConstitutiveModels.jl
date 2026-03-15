@@ -40,6 +40,9 @@ function helmholtz_free_energy(
     return ψ
 end
 
+"""
+$(TYPEDSIGNATURES)
+"""
 function pk1_stress(
     ::NeoHookean,
     props, Δt,
@@ -67,6 +70,9 @@ end
 #                                       − I⊗C⁻¹ − C⁻¹⊗I ]
 # where ⊙ is the minor-symmetrized outer product
 #   (A⊙B)_{ijkl} = ½(A_{ik}B_{jl} + A_{il}B_{jk})
+"""
+$(TYPEDSIGNATURES)
+"""
 function material_tangent(
     ::NeoHookean,
     props, Δt,
@@ -86,12 +92,16 @@ function material_tangent(
     S = (0.5κ * (J2 - 1.0)) * IC + μ * Jm23 * (I2 - (trC / 3.0) * IC)
 
     # Lagrangian moduli  ℂ = 2 ∂S/∂C
-    ICxIC  = otimes(IC, IC)                          # C⁻¹ ⊗ C⁻¹
+    ICxIC  = IC ⊗ IC # C⁻¹ ⊗ C⁻¹
     ICodIC = 0.5 * (otimesu(IC, IC) + otimesl(IC, IC))  # C⁻¹ ⊙ C⁻¹
     ℂ_vol  = κ * (J2 * ICxIC - (J2 - 1.0) * ICodIC)
 
     coeff  = 2.0μ * Jm23 / 3.0
-    ℂ_dev  = coeff * (trC * (ICxIC / 3.0 + ICodIC) - otimes(IC, I2) - otimes(I2, IC))
+    ℂ_dev  = coeff * (
+        trC * (ICxIC / 3.0 + ICodIC) - 
+        IC ⊗ I2 -
+        I2 ⊗ IC
+    )
 
     ℂ = ℂ_vol + ℂ_dev
 

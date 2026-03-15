@@ -15,6 +15,7 @@ export ArrudaBoyce,
        Gent,
        Hencky,
        LinearElastic,
+       MooneyRivlin,
        NeoHookean,
        SaintVenantKirchhoff,
        SethHill
