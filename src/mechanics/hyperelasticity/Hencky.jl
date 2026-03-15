@@ -20,53 +20,84 @@ end
 $(TYPEDSIGNATURES)
 """
 function helmholtz_free_energy(
-    model::Hencky,
+    ::Hencky,
     props, Δt,
-    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new,
-    args...
+    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new
 ) where T <: Number
+    κ, μ = props[1], props[2]
+
     # kinematics
     I = one(typeof(∇u))
     F = ∇u + I
     C = tdot(F)
-    return helmholtz_free_energy(model, props, Δt, C, θ, Z_old, Z_new)
-end
-
-function helmholtz_free_energy(
-    ::Hencky,
-    props, Δt,
-    C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
-) where T <: Number
-    # unpack properties
-    κ, μ = props[1], props[2]
-
-    # kinematics
-    E     = 0.5 * log_safe(C)
-    trE   = tr(E)
-    E_dev = dev(E)
+    λs = principal_stretchs(C)
+    logλs = Tensors._map(log, λs)
+    tr_logλs = logλs[1] + logλs[2] + logλs[3]
+    dev_logλs = Tensors._map(x -> x - (1 / 3) * tr_logλs, logλs)
 
     # constitutive
-    ψ_vol = 0.5 * κ * trE^2
-    ψ_dev = μ * dcontract(E_dev, E_dev)
-    ψ     = ψ_vol + ψ_dev
-    return ψ
+    ψ_vol = 0.5κ * tr_logλs
+    ψ_dev = μ * (
+        dev_logλs[1] * dev_logλs[1] +
+        dev_logλs[2] * dev_logλs[2] +
+        dev_logλs[3] * dev_logλs[3]
+    )
+    return ψ_vol + ψ_dev
+end
+
+function pk1_stress(
+    model::Hencky,
+    props, Δt,
+    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new,
+    ::ForwardDiffAD
+) where T <: Number
+    F = ∇u + one(∇u)
+    S = pk2_stress(model, props, Δt, ∇u, θ, Z_old, Z_new)
+    return F ⋅ S
 end
 
 function pk2_stress(
-    model::Hencky,
+    ::Hencky,
     props, Δt,
-    C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
+    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new
 ) where T <: Number
-    Tensors.gradient(z -> helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new), C)
+    κ, μ = props[1], props[2]
+
+    I = one(∇u)
+    F = ∇u + I
+
+    # Right stretch tensor
+    C = tdot(F)
+    # U = sqrt(Symmetric(C))   # U = sqrt(C)
+    logU = 0.5 * log_safe(C)
+
+    # Hencky logarithmic strain
+    # logU = log(U)
+    tr_logU = tr(logU)
+    dev_logU = logU - (tr_logU / 3) * one(logU)
+
+    # PK2 stress (second Piola-Kirchhoff)
+    S_vol = κ * tr_logU * inv(C)
+    S_dev = 2.0 * μ * dev_logU
+    S = S_vol + S_dev
+    return S
 end
 
-function pk2_tangent(
-    model::Hencky,
-    props, Δt,
-    C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
-) where T <: Number
-    Tensors.hessian(z -> helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new), C)
-end
+# function pk2_stress(
+#     model::Hencky,
+#     props, Δt,
+#     C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
+# ) where T <: Number
+#     Tensors.gradient(z -> helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new), C)
+# end
+
+# function pk2_tangent(
+#     model::Hencky,
+#     props, Δt,
+#     C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
+# ) where T <: Number
+#     Tensors.hessian(z -> helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new), C)
+# end
 
 # function cauchy_stress(
 #     ::Hencky,

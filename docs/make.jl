@@ -28,6 +28,7 @@ makedocs(;
             "mechanics/gent.md",
             "mechanics/hencky.md",
             "mechanics/linear_elastic.md",
+            "mechanics/mooney_rivlin.md",
             "mechanics/neohookean.md",
             "mechanics/saint_venant_kirchoff.md",
             "mechanics/seth_hill.md"
