@@ -26,7 +26,7 @@ end
   return ifelse(λ2 == λ1, f1(λ1), f2(λ1, λ2_safe))
 end
 
-@inline function eigen_sym33_non_unit(tensor::SymmetricTensor{2, 3, T, 6}) where T <: Number
+@inline function _eigen_non_normalized(tensor::SymmetricTensor{2, 3, T, 6}) where T <: Number
   cxx = tensor[1, 1]
   cyy = tensor[2, 2]
   czz = tensor[3, 3]
@@ -207,12 +207,12 @@ end
   return evals, evecs
 end
 
-@inline function eigen_sym33_unit(tensor::SymmetricTensor{2, 3, T, 6}) where T <: Number
+@inline function _eigen_normalized(tensor::SymmetricTensor{2, 3, T, 6}) where T <: Number
   cmax = norm(tensor, Inf)
   cmaxInv = ifelse(cmax > zero(T), one(T) / cmax, one(T))
   scaledTensor = cmaxInv * tensor
 
-  evals, evecs = eigen_sym33_non_unit(scaledTensor)
+  evals, evecs = _eigen_non_normalized(scaledTensor)
   evals = cmax * evals
 
   evec0 = evecs[:, 1]
@@ -235,29 +235,61 @@ end
   return evals, evecs
 end
 
-@inline function _matrix_function(f, A::SymmetricTensor{2, 3, T, 6}) where T <: Number
-  evals, evecs = eigen_sym33_unit(A)
-  new_evals = diagm(SymmetricTensor{2, 3, T, 6}, Tensors._map(f, evals))
+@inline function _matrix_function(f, A::SymmetricTensor{2, 3, T, 6}, args...) where T <: Number
+  evals, evecs = _eigen_normalized(A)
+  new_evals = diagm(SymmetricTensor{2, 3, T, 6}, Tensors._map(x -> f(x, args...), evals))
   return dot(evecs, dot(new_evals, evecs')) |> symmetric
 end
 
-# @inline function _dmatrix_function(df, rel_diff, A::SymmetricTensor{2, 3, T, 6}) where T <: Number
-@inline function _dmatrix_function(f, df, A::SymmetricTensor{2, 3, T, 6}) where T <: Number  
-  evals, evecs = eigen_sym33_unit(A)
-  new_evals = diagm(SymmetricTensor{2, 3, T, 6}, Tensors._map(f, evals))
-  new_devals = diagm(SymmetricTensor{2, 3, T, 6}, Tensors._map(df, evals))
-  fA = dot(evecs, dot(new_evals, evecs')) |> symmetric
-  dfA_temp = dot(evecs, dot(new_devals, evecs')) |> symmetric
-  I = one(dfA_temp)
-  dfA = 0.5 * (otimesu(dfA_temp, I) + otimesl(dfA_temp, I)) |> symmetric
-  return fA, dfA
+@inline function _dmatrix_function(f, df, A::SymmetricTensor{2, 3, T, 6}, args...) where T <: Number
+  tol = sqrt(eps(T))
+  evals, evecs = _eigen_normalized(A)
+  evecs = (
+    Vec{3, T}((evecs[1, 1], evecs[2, 1], evecs[3, 1])),
+    Vec{3, T}((evecs[1, 2], evecs[2, 2], evecs[3, 2])),
+    Vec{3, T}((evecs[1, 3], evecs[2, 3], evecs[3, 3])),
+  )
+
+  A = zero(Tensor{4, 3, T, 81})
+
+  for i in 1:3, j in 1:3
+    λi = evals[i]
+    if i == j
+        coeff = df(λi, args...)
+    else
+        # λi = evals[i]
+        λj = evals[j]
+
+        Δ = λi - λj
+        scale = max(abs(λi), abs(λj), one(T))
+
+        if abs(Δ) ≤ tol * scale
+          # L'Hôpital limit
+          coeff = df(λi)
+        else
+          coeff = (f(λi, args...) - f(λj, args...)) / Δ
+        end
+    end
+    Nij = evecs[i] ⊗ evecs[j]
+    A += coeff * (Nij ⊗ symmetric(Nij))
+  end
+
+  return A
 end
 
-@inline _dlog(x) = one(x) / x
-# @inline _dpow(x, n) = n * pow(x, n - 1)
-@inline _dsqrt(x) = sqrt(x) / 2
+@inline pow(x::T, m::U) where {T <: Number, U <: Number} = x^m
+@inline _dexp(x::T) where T <: Number = exp(x)
+@inline _dlog(x::T) where T <: Number = one(x) / x
+@inline _dpow(x::T, m::U) where {T <: Number, U <: Number} = m * pow(x, m - 1)
+# @inline _dsqrt(x::T) where T <: Number = sqrt(x) / 2
+@inline _dsqrt(x::T) where T <: Number = 1 / (2 * sqrt(x))
 
-@inline function log_safe(A)
+
+@inline function Base.exp(A::SymmetricTensor{2, 3, T, 6}) where T <: Number
+  return _matrix_function(exp, A)
+end
+
+@inline function Base.log(A::SymmetricTensor{2, 3, T, 6}) where T <: Number
   if A == one(A)
     return zero(A)
   else
@@ -265,24 +297,29 @@ end
   end
 end
 
-# for some reason, typing this makes the derivative not register
-@inline function sqrt_safe(A)
+@inline function pow(A::SymmetricTensor{2, 3, T, 6}, m::U) where {T <: Number, U <: Number}
+  return _matrix_function(pow, A, m)
+end
+
+@inline function Base.sqrt(A::SymmetricTensor{2, 3, T, 6}) where T <: Number
   return _matrix_function(sqrt, A)
 end
 
-# Define known derivative
-@inline function dlog_safe(A::SymmetricTensor{2, D, T, N}) where{D, T <: Number, N}
-  logA, dlogA = _dmatrix_function(log, _dlog, A)
-  return logA, dlogA
+# Define known derivatives
+@inline function dexp(A::SymmetricTensor{2, D, T, N}) where{D, T <: Number, N}
+  return _dmatrix_function(exp, _dexp, A)
 end
 
-@inline function dsqrt_safe(A::SymmetricTensor{2, D, T, N}) where{D, T <: Number, N}
-  sqrtA, dsqrtA = _dmatrix_function(sqrt, _dsqrt, A)
-  return sqrtA, dsqrtA
+@inline function dlog(A::SymmetricTensor{2, D, T, N}) where{D, T <: Number, N}
+  return _dmatrix_function(log, _dlog, A)
 end
 
-# Implement known derivative
-@implement_gradient log_safe dlog_safe
-@implement_gradient sqrt_safe dsqrt_safe
+@inline function dpow(A::SymmetricTensor{2, D, T, N}, m::U) where{D, T <: Number, N, U <: Number}
+  return _dmatrix_function(pow, _dpow, A, m)
+end
+
+@inline function dsqrt(A::SymmetricTensor{2, D, T, N}) where{D, T <: Number, N}
+  return _dmatrix_function(sqrt, _dsqrt, A)
+end
 
 # end # muladd

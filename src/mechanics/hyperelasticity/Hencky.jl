@@ -69,7 +69,7 @@ function pk2_stress(
     # Right stretch tensor
     C = tdot(F)
     # U = sqrt(Symmetric(C))   # U = sqrt(C)
-    logU = 0.5 * log_safe(C)
+    logU = 0.5 * log(C)
 
     # Hencky logarithmic strain
     # logU = log(U)

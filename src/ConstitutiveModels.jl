@@ -1,6 +1,7 @@
 module ConstitutiveModels
 
 # exports
+export pow
 export cauchy_stress,
        entropy,
        heat_capacity,
