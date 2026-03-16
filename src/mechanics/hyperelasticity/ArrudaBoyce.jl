@@ -45,3 +45,44 @@ function helmholtz_free_energy(
     ψ = ψ_vol + ψ_dev
     return ψ
 end
+
+# function pk1_stress(
+#     ::ArrudaBoyce,
+#     props, Δt,
+#     ∇u, θ, Z_old, Z_new
+# )
+#     κ, μ, sqrt_n = props[1], props[2], props[3]
+
+#     # kinematics
+#     I       = one(typeof(∇u))
+#     F       = ∇u + I
+#     J       = det(F)
+#     J_m_13  = 1. / cbrt(J)
+#     J_m_23  = J_m_13 * J_m_13
+#     C       = tdot(F)
+#     I1      = tr(C)
+#     F_inv_T = inv(F)'
+
+#     # chain stretch
+#     I1_bar  = J_m_23 * I1
+#     λ_chain = sqrt(I1_bar / 3)
+
+#     β = inverse_langevin_approximation(
+#         λ_chain / sqrt_n,
+#         TreloarApproximation()
+#     )
+
+#     # volumetric part
+#     P_vol = 0.5 * κ * (J * J - 1.) * F_inv_T
+
+#     # deviatoric part
+#     coeff = 2μ * β / (3 * λ_chain)
+
+#     P_dev = coeff * J_m_23 * (
+#         F -
+#         (1 / 3) * I1 * F_inv_T
+#     )
+
+#     P = P_vol + P_dev
+#     return P
+# end

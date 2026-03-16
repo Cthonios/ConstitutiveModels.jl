@@ -7,7 +7,69 @@ end
 function _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
     Ps_ad = pk1_stress.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,), (ConstitutiveModels.ForwardDiffAD(),))
     Ps_an = pk1_stress.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    # display(map((x, y) -> x - y, Ps_ad, Ps_an))
+    # @assert false
     @test all(map((x, y) -> isapprox(x, y, atol = 1e-10, rtol = 1e-10), Ps_ad, Ps_an))
+end
+
+#########################################################
+# ArrudaBoyce
+#########################################################
+function test_arruda_boyce_uniaxial_strain(model, inputs)
+    props = initialize_props(model, inputs)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
+    Δt = 0.0
+    θ = 0.0
+
+    motion = UniaxialStrain()
+    λs = LinRange(0.25, 4., 101)
+
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
+    )
+    κ, C1, C2 = props[1], props[2], props[3]
+
+    # # analytical Helmholtz free energy
+    # J = λs
+    # J_m_13 = 1.0 ./ cbrt.(J)
+    # J_m_23 = J_m_13 .* J_m_13
+    # J_m_43 = J_m_23 .* J_m_23
+    # I1 = λs.^2 .+ 2
+    # I2 = 0.5 * (I1.^2 .- λs.^4 .- 2.)
+    # I1_bar = J_m_23 .* I1
+    # I2_bar = J_m_23 .* J_m_23 .* 0.5 .* (I1.^2 .- (λs.^4 .+ 2))
+    # ψs_an = 0.5 * κ * (0.5 * (J.^2 .- 1) .- log.(J)) .+ C1 .* (I1_bar .- 3) .+ C2 .* (I2_bar .- 3)
+    
+    # ψs = helmholtz_free_energy.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
+    # @test all(ψs_an .≈ ψs)
+
+    # # TODO
+    # # analytical Cauchy stress components (compressible uniaxial)
+    # σ_xx_an = 0.5 * κ .* (λs .- 1. ./ λs) +
+    #       (2/3) * 2C1 .* (λs.^2 .- 1.) .* λs.^(-5/3) +
+    #       (4/3) * C2 .* (λs.^2 .- 1.) .* λs.^(-7/3)
+
+    # σ_yy_an = 0.5 * κ .* (λs .- 1. ./ λs) -
+    #       (1/3) * 2C1 .* (λs.^2 .- 1.) .* λs.^(-5/3) -
+    #       (2/3) * C2 .* (λs.^2 .- 1.) .* λs.^(-7/3)
+
+    # test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
+
+    # check AD vs analytic tangent and PK1 stress
+    # _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
+end
+
+function test_arruda_boyce()
+    inputs = Dict(
+        "Young's modulus" => 1.0,
+        "Poisson's ratio" => 0.3,
+        "n"               => 25.0
+    )
+    model = ArrudaBoyce()
+    # test_mooney_rivlin_simple_shear(model, inputs)
+    # test_arruda_boyce_uniaxial_strain(model, inputs)
 end
 
 #########################################################
@@ -285,7 +347,6 @@ function test_mooney_rivlin()
     test_mooney_rivlin_uniaxial_strain(model, inputs)
 end
 
-
 #########################################################
 # NeoHookean
 #########################################################
@@ -558,6 +619,7 @@ function test_seth_hill()
 end
 
 function test_hyperelastic_models()
+    test_arruda_boyce()
     test_gent()
     test_hencky()
     test_linear_elastic()

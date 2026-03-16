@@ -71,6 +71,10 @@ end
     include("TestPlasticityModels.jl")
 end
 
+@testset "Utils" begin
+    include("TestUtils.jl")
+end
+
 @testset "Aqua" begin
     Aqua.test_all(
         ConstitutiveModels,

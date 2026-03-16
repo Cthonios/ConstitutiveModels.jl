@@ -172,7 +172,7 @@ end
 
     # Spectral decomposition of symmetric trial Ce (GPU-compatible)
     Ce_tr = symmetric(tdot(Fe_tr))
-    c, Q  = eigen_sym33_unit(Ce_tr)   # c::Vec{3,T}, Q::Tensor{2,3,T,9}
+    c, Q  = _eigen_normalized(Ce_tr)   # c::Vec{3,T}, Q::Tensor{2,3,T,9}
 
     # Trial principal Hencky strains and Mandel stresses
     ε_tr    = SVector{3,T}(T(0.5)*log(c[1]), T(0.5)*log(c[2]), T(0.5)*log(c[3]))
