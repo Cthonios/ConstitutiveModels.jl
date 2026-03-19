@@ -44,8 +44,7 @@ end
 function pk1_stress(
     ::Gent,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     # unpack properties
     κ, μ, Jm = props[1], props[2], props[3]
@@ -63,4 +62,46 @@ function pk1_stress(
     P = 0.5 * κ * (J * J - 1.) * F_inv_T + 
         μ * J_m_23 * Jm * (F - (1. / 3.) * I_1 * F_inv_T) / (Jm - I_1_bar + 3)
     return P
+end
+
+function material_tangent(
+    ::Gent,
+    props, Δt,
+    ∇u, θ, Z_old, Z_new
+)
+    κ, μ, Jm = props[1], props[2], props[3]
+
+    F    = ∇u + one(∇u)
+    J    = det(F)
+    J2   = J * J
+    Jm23 = cbrt(J)^(-2)
+    C    = tdot(F)
+    IC   = inv(C)
+    I2   = one(IC)
+    trC  = tr(C)
+    β    = Jm - Jm23 * trC + 3
+    γ    = μ * Jm * Jm23
+    γβ   = γ / β
+    V    = I2 - (trC / 3) * IC
+
+    # PK2
+    S = (κ / 2) * (J2 - 1) * IC + γβ * V
+
+    # standard building blocks
+    ICxIC  = IC ⊗ IC
+    ICodIC = 0.5 * (otimesu(IC, IC) + otimesl(IC, IC))
+
+    # same as NeoHookean
+    ℂ_vol = κ * (J2 * ICxIC - (J2 - 1) * ICodIC)
+
+    # ℂ_dev = 2∂S_dev/∂C
+    # 2∂(γ/β)/∂C = 2(γ/β)*(-1/3 C⁻¹ + J^{-2/3}/β * V)
+    dγβ2 = 2 * γβ * (-(1/3) * IC + (Jm23 / β) * V)
+
+    # 2∂V/∂C = -2/3*(I⊗C⁻¹) + 2*trC/3 * C⁻¹⊙C⁻¹
+    dV2 = -(2/3) * (I2 ⊗ IC) + (2 * trC / 3) * ICodIC
+    ℂ_dev = dγβ2 ⊗ V + γβ * dV2
+
+    ℂ = ℂ_vol + ℂ_dev
+    return _convect_tangent(ℂ, S, F)
 end
