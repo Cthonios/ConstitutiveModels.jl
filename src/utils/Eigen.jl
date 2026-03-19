@@ -235,46 +235,92 @@ end
   return evals, evecs
 end
 
+# Extracts the "real" part of a number — identity for Float64, primal for duals
+@inline _primal(x::T) where T <: Number = x
+@inline _primal(x) = ForwardDiff.value(x)  # or use real() if using ReverseDiff
+
+@inline function _is_identity(A::SymmetricTensor{2, 3, T, 6}) where T
+    A11 = _primal(A[1, 1]); A22 = _primal(A[2, 2]); A33 = _primal(A[3, 3])
+    A12 = _primal(A[1, 2]); A13 = _primal(A[1, 3]); A23 = _primal(A[2, 3])
+    tol = sqrt(eps(typeof(A11)))
+    return (
+        abs(A11 - 1) < tol && abs(A22 - 1) < tol && abs(A33 - 1) < tol &&
+        abs(A12)     < tol && abs(A13)     < tol && abs(A23)     < tol
+    )
+end
+
 @inline function _matrix_function(f, A::SymmetricTensor{2, 3, T, 6}, args...) where T <: Number
   evals, evecs = _eigen_normalized(A)
   new_evals = diagm(SymmetricTensor{2, 3, T, 6}, Tensors._map(x -> f(x, args...), evals))
   return dot(evecs, dot(new_evals, evecs')) |> symmetric
 end
 
+# @inline function _dmatrix_function(f, df, A::SymmetricTensor{2, 3, T, 6}, args...) where T <: Number
+#   tol = sqrt(eps(T))
+#   evals, evecs = _eigen_normalized(A)
+#   evecs = (
+#     Vec{3, T}((evecs[1, 1], evecs[2, 1], evecs[3, 1])),
+#     Vec{3, T}((evecs[1, 2], evecs[2, 2], evecs[3, 2])),
+#     Vec{3, T}((evecs[1, 3], evecs[2, 3], evecs[3, 3])),
+#   )
+
+#   A = zero(Tensor{4, 3, T, 81})
+
+#   for i in 1:3, j in 1:3
+#     λi = evals[i]
+#     if i == j
+#         coeff = df(λi, args...)
+#     else
+#         # λi = evals[i]
+#         λj = evals[j]
+
+#         Δ = λi - λj
+#         scale = max(abs(λi), abs(λj), one(T))
+
+#         if abs(Δ) ≤ tol * scale
+#           # L'Hôpital limit
+#           coeff = df(λi)
+#         else
+#           coeff = (f(λi, args...) - f(λj, args...)) / Δ
+#         end
+#     end
+#     Nij = evecs[i] ⊗ evecs[j]
+#     A += coeff * (Nij ⊗ symmetric(Nij))
+#   end
+
+#   return A
+# end
 @inline function _dmatrix_function(f, df, A::SymmetricTensor{2, 3, T, 6}, args...) where T <: Number
-  tol = sqrt(eps(T))
+  tol = sqrt(eps(real(float(T))))   # real() + float() handles duals safely
   evals, evecs = _eigen_normalized(A)
   evecs = (
-    Vec{3, T}((evecs[1, 1], evecs[2, 1], evecs[3, 1])),
-    Vec{3, T}((evecs[1, 2], evecs[2, 2], evecs[3, 2])),
-    Vec{3, T}((evecs[1, 3], evecs[2, 3], evecs[3, 3])),
+      Vec{3, T}((evecs[1, 1], evecs[2, 1], evecs[3, 1])),
+      Vec{3, T}((evecs[1, 2], evecs[2, 2], evecs[3, 2])),
+      Vec{3, T}((evecs[1, 3], evecs[2, 3], evecs[3, 3])),
   )
-
-  A = zero(Tensor{4, 3, T, 81})
-
+  result = zero(Tensor{4, 3, T, 81})
   for i in 1:3, j in 1:3
-    λi = evals[i]
-    if i == j
-        coeff = df(λi, args...)
-    else
-        # λi = evals[i]
-        λj = evals[j]
-
-        Δ = λi - λj
-        scale = max(abs(λi), abs(λj), one(T))
-
-        if abs(Δ) ≤ tol * scale
-          # L'Hôpital limit
-          coeff = df(λi)
-        else
-          coeff = (f(λi, args...) - f(λj, args...)) / Δ
-        end
-    end
-    Nij = evecs[i] ⊗ evecs[j]
-    A += coeff * (Nij ⊗ symmetric(Nij))
+      λi = evals[i]
+      if i == j
+          coeff = df(λi, args...)
+      else
+          λj = evals[j]
+          Δ = λi - λj
+          # Use primal values only for the branch decision
+          Δ_primal  = _primal(Δ)
+          λi_primal = _primal(λi)
+          λj_primal = _primal(λj)
+          scale = max(abs(λi_primal), abs(λj_primal), one(real(float(T))))
+          if abs(Δ_primal) ≤ tol * scale
+              coeff = df(λi, args...)
+          else
+              coeff = (f(λi, args...) - f(λj, args...)) / Δ
+          end
+      end
+      Nij = evecs[i] ⊗ evecs[j]
+      result += coeff * (Nij ⊗ symmetric(Nij))
   end
-
-  return A
+  return result
 end
 
 @inline pow(x::T, m::U) where {T <: Number, U <: Number} = x^m
@@ -289,11 +335,19 @@ end
   return _matrix_function(exp, A)
 end
 
+# @inline function Base.log(A::SymmetricTensor{2, 3, T, 6}) where T <: Number
+#   if A == one(A)
+#     return zero(A)
+#   else
+#     return _matrix_function(log, A)
+#   end
+# end
 @inline function Base.log(A::SymmetricTensor{2, 3, T, 6}) where T <: Number
-  if A == one(A)
-    return zero(A)
+  # Check primal values only — works correctly for both Float64 and ForwardDiff duals
+  if _is_identity(A)
+      return zero(A)
   else
-    return _matrix_function(log, A)
+      return _matrix_function(log, A)
   end
 end
 
