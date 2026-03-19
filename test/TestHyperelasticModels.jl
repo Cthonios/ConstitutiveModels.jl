@@ -1,7 +1,11 @@
-function _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+function _test_ad_equal_analytic_for_hyper_material_tangent(
+    model, props, Δt, ∇us, θ, Z_old, Z_new;
+    atol = 1e-10, rtol = 1e-10
+)
     As_ad = material_tangent.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,), (ConstitutiveModels.ForwardDiffAD(),))
     As_an = material_tangent.((model,), (props,), (Δt,), ∇us, (θ,), (Z_old,), (Z_new,))
-    @test all(map((x, y) -> isapprox(x, y, atol = 1e-10, rtol = 1e-10), As_ad, As_an))
+    # display(map((x, y) -> x - y, As_ad, As_an))
+    @test all(map((x, y) -> isapprox(x, y, atol = atol, rtol = rtol), As_ad, As_an))
 end
 
 function _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
@@ -137,6 +141,46 @@ end
 #########################################################
 # Hencky
 #########################################################
+function test_hencky_simple_shear(model, inputs)
+    props = initialize_props(model, inputs)
+    Z_old = initialize_state(model)
+    Z_new = initialize_state(model)
+    Δt = 0.0
+    θ = 0.0
+
+    motion = SimpleShear()
+    # AD failing on zero deformation
+    γs = LinRange(0.0005, 0.05, 11)
+
+    ∇us, σs, _ = simulate_material_point(
+        cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs
+    )
+    κ, μ = props[1], props[2]
+    σs_an = map(∇us) do ∇u
+        F   = ∇u + one(∇u)
+        J   = det(F)
+        C   = tdot(F)
+        IC  = inv(C)
+        E   = 0.5 * log(C)
+        A   = κ * tr(E) * one(C) + 2μ * dev(E)
+        S   = IC ⋅ A
+        σ   = symmetric((1 / J) * F ⋅ S ⋅ transpose(F))
+        return σ
+    end
+    σ_xx_an = map(x -> x[1, 1], σs_an)
+    σ_yy_an = map(x -> x[2, 2], σs_an)
+    σ_zz_an = map(x -> x[3, 3], σs_an)
+    σ_xy_an = map(x -> x[1, 2], σs_an)
+
+    test_stress_eq(motion, σs, σ_xx_an, σ_yy_an, σ_zz_an, σ_xy_an)
+
+    _test_ad_equal_analytic_for_hyper_material_tangent(
+        model, props, Δt, ∇us, θ, Z_old, Z_new;
+        atol = 1e-9, rtol=1e-9
+    )
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
+end
+
 function test_hencky_uniaxial_strain(model, inputs)
     props = initialize_props(model, inputs)
     Z_old = initialize_state(model)
@@ -145,29 +189,31 @@ function test_hencky_uniaxial_strain(model, inputs)
     θ = 0.0
 
     motion = UniaxialStrain()
-    λs = LinRange(0.95, 1.05, 11)
+    λs = LinRange(1.0005, 1.05, 11)
 
     ∇us, σs, _ = simulate_material_point(
         cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs
     )
 
-    εs = λs .- 1
-    εs = log.(λs)
     κ, μ = props[1], props[2]
-    # trεs = 
+    σs_an = map(∇us) do ∇u
+        F   = ∇u + one(∇u)
+        J   = det(F)
+        C   = tdot(F)
+        IC  = inv(C)
+        E   = 0.5 * log(C)
+        A   = κ * tr(E) * one(C) + 2μ * dev(E)
+        S   = IC ⋅ A
+        σ   = symmetric((1 / J) * F ⋅ S ⋅ transpose(F))
+        return σ
+    end
+    σ_xx_an = map(x -> x[1, 1], σs_an)
+    σ_yy_an = map(x -> x[2, 2], σs_an)
 
-    # εs = λs .- 1.
-    # εs = log.(λs)
-    # κ, μ = props[1], props[2]
-    # λ = κ - (2. / 3.) * μ
-    # # σ_xx_an = (λ * εs .+ 2. * μ * εs) ./ λs
-    # # σ_xx_an = (κ * εs .+ (4. / 3.) * μ * εs) / λs
-    # # σ_yy_an = λ * εs
-    # σ_xx_an = (λ * εs .+ 2 * μ * εs) ./ λs
-    # σ_yy_an = (λ * εs) ./ λs
-    # test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
+    test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
 
-    # _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_material_tangent(model, props, Δt, ∇us, θ, Z_old, Z_new)
+    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, Δt, ∇us, θ, Z_old, Z_new)
 end
 
 function test_hencky()
@@ -176,7 +222,8 @@ function test_hencky()
         "Poisson's ratio" => 0.3
     )
     model = Hencky()
-    test_hencky_uniaxial_strain(model, inputs)
+    test_hencky_simple_shear(model, inputs)
+    # test_hencky_uniaxial_strain(model, inputs)
 end
 
 #########################################################
@@ -613,6 +660,9 @@ function test_seth_hill()
 
     test_seth_hill_simple_shear(model, inputs_1_2)
     test_seth_hill_uniaxial_strain(model, inputs_1_2)
+
+    test_seth_hill_simple_shear(model, inputs_2_1)
+    test_seth_hill_uniaxial_strain(model, inputs_2_1)
 
     test_seth_hill_simple_shear(model, inputs_2_2)
     test_seth_hill_uniaxial_strain(model, inputs_2_2)

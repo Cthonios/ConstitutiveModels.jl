@@ -30,21 +30,41 @@ function helmholtz_free_energy(
     I = one(typeof(∇u))
     F = ∇u + I
     C = tdot(F)
-    λs = principal_stretchs(C)
-    logλs = Tensors._map(log, λs)
-    tr_logλs = logλs[1] + logλs[2] + logλs[3]
-    dev_logλs = Tensors._map(x -> x - (1 / 3) * tr_logλs, logλs)
+    E = 0.5 * log(C)
+    trE = tr(E)
+    devE = dev(E)
 
     # constitutive
-    ψ_vol = 0.5κ * tr_logλs
-    ψ_dev = μ * (
-        dev_logλs[1] * dev_logλs[1] +
-        dev_logλs[2] * dev_logλs[2] +
-        dev_logλs[3] * dev_logλs[3]
-    )
-    return ψ_vol + ψ_dev
+    ψ = 0.5κ * trE * trE + μ * dcontract(devE, devE)
+    return ψ
 end
 
+"""
+$(TYPEDSIGNATURES)
+"""
+function pk2_stress(
+    ::Hencky,
+    props, Δt,
+    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new
+) where T <: Number
+    κ, μ = props[1], props[2]
+
+    # kinematics
+    F = ∇u + one(∇u)
+    C = tdot(F)
+    E = 0.5 * log(C)
+    trE = tr(E)
+    devE = dev(E)
+
+    # constitutive
+    dψdE = κ * trE * one(C) + 2μ * devE
+    S = inv(C) ⋅ dψdE
+    return S
+end
+
+"""
+$(TYPEDSIGNATURES)
+"""
 function pk1_stress(
     model::Hencky,
     props, Δt,
@@ -56,75 +76,66 @@ function pk1_stress(
     return F ⋅ S
 end
 
-function pk2_stress(
+"""
+$(TYPEDSIGNATURES)
+"""
+function material_tangent(
     ::Hencky,
     props, Δt,
     ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new
 ) where T <: Number
     κ, μ = props[1], props[2]
 
-    I = one(∇u)
-    F = ∇u + I
+    # kinematics
+    F  = ∇u + one(∇u)
+    C  = tdot(F)
+    IC = inv(C)
+    I2 = one(C)
 
-    # Right stretch tensor
-    C = tdot(F)
-    # U = sqrt(Symmetric(C))   # U = sqrt(C)
-    logU = 0.5 * log(C)
+    E       = 0.5 * log(C)
+    trE     = tr(E)
+    devE    = dev(E)
+    A       = κ * trE * I2 + 2μ * devE
+    S       = IC ⋅ A
 
-    # Hencky logarithmic strain
-    # logU = log(U)
-    tr_logU = tr(logU)
-    dev_logU = logU - (tr_logU / 3) * one(logU)
+    # H = ∂²ψ/∂E²
+    IxI  = I2 ⊗ I2
+    Isym = 0.5 * (otimesu(I2, I2) + otimesl(I2, I2))
+    H    = κ * IxI + 2μ * (Isym - (1/3) * IxI)
 
-    # PK2 stress (second Piola-Kirchhoff)
-    S_vol = κ * tr_logU * inv(C)
-    S_dev = 2.0 * μ * dev_logU
-    S = S_vol + S_dev
-    return S
+    dist = norm(C - I2)
+    dlogCdC = dist < sqrt(eps(real(T))) ? Isym : dlog(C)
+
+    # ∂A_{ij}/∂C_{kl} = 0.5 * H_{ijmn} * dlogCdC_{mnkl}
+    dAdC = Tensor{4, 3, T, 81}() do i, j, k, l
+        s = zero(T)
+        @inbounds for m in 1:3, n in 1:3
+            s += H[i, j, m, n] * dlogCdC[m, n, k, l]
+        end
+        0.5 * s
+    end
+
+    # term1: IC_{im} ∂A_{mj}/∂C_{kl}
+    term1 = Tensor{4, 3, T, 81}() do i, j, k, l
+        s = zero(T)
+        @inbounds for m in 1:3
+            s += IC[i, m] * dAdC[m, j, k, l]
+        end
+        s
+    end
+
+    # term2: ∂(C⁻¹)_{im}/∂C_{kl} * A_{mj} = -½(IC_{ik}S_{lj} + IC_{il}S_{kj})
+    term2 = Tensor{4, 3, T, 81}() do i, j, k, l
+        -0.5 * (IC[i, k] * S[l, j] + IC[i, l] * S[k, j])
+    end
+
+    # ℂ = 2∂S/∂C in [i,j,k,l] = [m,J,n,L] index order.
+    # _convect_tangent reads ℂ[m,j,l,n], i.e. it expects [m,J,L,n] order,
+    # so we must swap indices 3 and 4 before passing in.
+    dSdC = term1 + term2
+    ℂ = Tensor{4, 3, T, 81}() do i, j, k, l
+        2 * dSdC[i, j, l, k]   # swap k↔l to match _convect_tangent's [m,J,L,n]
+    end
+
+    return _convect_tangent(ℂ, S, F)
 end
-
-# function pk2_stress(
-#     model::Hencky,
-#     props, Δt,
-#     C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
-# ) where T <: Number
-#     Tensors.gradient(z -> helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new), C)
-# end
-
-# function pk2_tangent(
-#     model::Hencky,
-#     props, Δt,
-#     C::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
-# ) where T <: Number
-#     Tensors.hessian(z -> helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new), C)
-# end
-
-# function cauchy_stress(
-#     ::Hencky,
-#     props, Δt,
-#     ∇u, θ, Z
-# )
-#     # unpack properties
-#     κ, μ = props[1], props[2]
-
-#     # kinematics
-#     I       = one(typeof(∇u))
-#     F       = ∇u + I
-#     J       = det(F)
-#     # trE     = log(J)
-#     E       = 0.5 * log_safe(tdot(F))
-#     trE     = tr(E)
-#     # E_dev   = NaNMath.pow(J, -2. / 3.) * E
-#     E_dev   = dev(E)
-#     # I_1_bar = tr(NaNMath.pow(J, -2. / 3.) * tdot(F))
-
-#     # constitutive
-#     # W_vol = 0.5 * κ * (0.5 * (J^2 - 1) - NaNMath.log(J))
-#     # W_dev = 0.5 * μ * (I_1_bar - 3.)
-#     # W_vol = 0.5 * κ * trE^2
-#     # W_dev = μ * dcontract(E_dev, E_dev)
-#     # ψ     = W_vol + W_dev
-#     σ = (κ * trE * I + 2. * μ * E_dev) / 1.
-#     Z = typeof(Z)()
-#     return σ, Z
-# end

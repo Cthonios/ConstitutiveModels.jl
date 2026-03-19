@@ -23,7 +23,8 @@ function cauchy_stress(
     F = ∇u + one(∇u)
     J = det(F)
     P = pk1_stress(model, props, Δt, ∇u, θ, Z_old, Z_new, args...)
-    σ = (1. / J) * dot(P, F')
+    # σ = (1. / J) * dot(P, F')
+    σ = (1 / J) * P ⋅ transpose(F)
     return σ
 end
 
