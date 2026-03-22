@@ -1,34 +1,23 @@
-# Finite-deformation J2 (von Mises) plasticity with multiplicative split.
+# Simo-Hughes J2 finite-deformation plasticity (BOX 9.1 + 9.2).
+#
+# Reference: Simo & Hughes, Computational Inelasticity, pp 317-321.
 #
 # Formulation
 # -----------
 #   Kinematics:    F = Fᵉ Fᵖ  (multiplicative decomposition)
-#   Elasticity:    Hencky (logarithmic) stored energy in Mandel stress space
-#   Yield surface: von Mises  f = σ_vm − (σ_y + H εᵖ)
+#   Elasticity:    neo-Hookean-type vol/dev split: U(J) + μ/2(tr b̄ᵉ - 3)
+#   Yield surface: von Mises  f = ‖s‖ - √(2/3)(σ_y + K α)
 #   Flow rule:     associated, isochoric  (tr Ṅ = 0)
 #   Hardening:     linear isotropic
 #
 # State variables (NS = 10)
 #   Z[1:9]  = vec(Fᵖ)  column-major; initial value = vec(I₃)
-#   Z[10]   = εᵖ       accumulated equivalent plastic strain; initial 0
+#   Z[10]   = α        accumulated equivalent plastic strain; initial 0
 #
 # Properties (NP = 4): [λ, μ, σ_y, H]
-#   λ, μ  : Lamé constants for Hencky elastic response
+#   λ, μ  : Lamé constants (converted to κ = λ + 2μ/3 internally)
 #   σ_y   : initial yield stress
 #   H     : linear isotropic hardening modulus
-#
-# GPU-compatible implementation
-# ------------------------------
-# log(Cᵉ_tr) and exp(Δεᵖ N) are computed via CM's branchless analytical
-# 3×3 symmetric eigensolver (eigen_sym33_unit), applying scalar log/exp to
-# the three eigenvalues.  N is symmetric and shares eigenvectors with Cᵉ_tr
-# (both are isotropic functions of Cᵉ_tr), so the same spectral basis serves
-# for both.  No LAPACK / LinearAlgebra calls remain.
-#
-# NOTE on state mutability
-# ------------------------
-# CM passes state as a mutable vector. Carina/FEC must allocate mutable
-# per-quadrature-point state arrays of size NS=10 for this model.
 
 """
 $(TYPEDEF)
@@ -55,212 +44,161 @@ function initialize_state(::FiniteDefJ2Plasticity, float_type = Float64)
 end
 
 # ---------------------------------------------------------------------------
-# Internal: radial-return stress update
+# Internal: Simo-Hughes stress update (BOX 9.1)
 # ---------------------------------------------------------------------------
-#
-# Returns (W, P, state_new) where:
-#   W         = stored energy density
-#   P         = PK1 stress  (Tensor{2,3,T,9})
-#   state_new = updated state (SVector{10,T})
 
-@inline function _j2_stress(
+@inline function _sh_j2_stress(
     props,
     F::Tensor{2,3,T,9},
     state_old::AbstractVector,
 ) where T
-    λ = T(props[1]); μ = T(props[2]); σ_y = T(props[3]); H = T(props[4])
+    # Convert Lamé λ → bulk modulus κ = λ + 2μ/3
+    λ = T(props[1]); μ = T(props[2]); σ_y = T(props[3]); K = T(props[4])
+    κ = λ + 2μ / 3
 
-    Fp_old   = Tensor{2,3,T,9}(ntuple(i -> T(state_old[i]), Val(9)))
-    eqps     = T(state_old[10])
+    Fp_old = Tensor{2,3,T,9}(ntuple(i -> T(state_old[i]), Val(9)))
+    α_n    = T(state_old[10])
 
-    # Trial elastic deformation gradient and right Cauchy-Green tensor
-    Fe_tr    = F ⋅ inv(Fp_old)
-    Ce_tr    = symmetric(tdot(Fe_tr))              # SymmetricTensor{2,3,T}
+    # Total Jacobian and isochoric factor
+    J    = det(F)
+    Jm23 = J^(-T(2)/3)
 
-    # Hencky trial strain: Eᵉ_tr = ½ log(Cᵉ_tr)
-    # eigen_sym33_unit is a GPU-compatible branchless analytical eigensolver
-    Ee_tr    = _matrix_function(log, Ce_tr) / 2
+    # Trial elastic left Cauchy-Green (isochoric): b̄ᵉ_trial = J^{-2/3} Fe_tr · Fe_trᵀ
+    Fe_tr     = F ⋅ inv(Fp_old)
+    be_bar_tr = symmetric(Jm23 * (Fe_tr ⋅ Fe_tr'))
 
-    # Trial Mandel stress
-    trEe     = tr(Ee_tr)
-    I2       = one(SymmetricTensor{2,3,T})
-    M_tr     = λ * trEe * I2 + 2μ * Ee_tr
-    Mdev_tr  = dev(M_tr)
-    σvm_tr   = sqrt(T(3) / 2) * norm(Mdev_tr)
+    # Trial deviatoric Kirchhoff stress: s_trial = μ dev[b̄ᵉ_trial]
+    s_trial      = μ * dev(be_bar_tr)
+    s_trial_norm = norm(s_trial)
 
-    f_tr = σvm_tr - (σ_y + H * eqps)
+    # Effective shear modulus: μ̄ = μ/3 tr[b̄ᵉ_trial]
+    μ̄ = μ * tr(be_bar_tr) / 3
 
-    if f_tr ≤ zero(T)
+    # Yield function
+    f_trial = s_trial_norm - sqrt(T(2)/3) * (σ_y + K * α_n)
+
+    I2 = one(SymmetricTensor{2,3,T})
+
+    if f_trial ≤ zero(T)
         # Elastic step
-        W        = T(0.5) * λ * trEe^2 + μ * dcontract(Ee_tr, Ee_tr)
-        Fe_new   = Fe_tr
-        Fp_new   = Fp_old
-        eqps_new = eqps
-        M_new    = M_tr
+        s_new      = s_trial
+        be_bar_new = be_bar_tr
+        α_new      = α_n
+        Δγ         = zero(T)
+        Fp_new     = Fp_old
     else
-        # Plastic step — radial return (exact for linear hardening)
-        Δεᵖ      = f_tr / (3μ + H)
-        N        = (T(3) / 2) * Mdev_tr / σvm_tr   # symmetric, traceless
-        Ee_new   = Ee_tr - Δεᵖ * N
-        eqps_new = eqps + Δεᵖ
-        W        = T(0.5) * λ * trEe^2 + μ * dcontract(Ee_new, Ee_new)
-        M_new    = λ * trEe * I2 + 2μ * Ee_new
-        # exp(Δεᵖ N): N symmetric → spectral decomposition (GPU-compatible)
-        exp_N    = Tensor{2,3,T,9}(_matrix_function(x -> exp(Δεᵖ * x), N))
-        Fp_new   = exp_N ⋅ Fp_old
-        Fe_new   = F ⋅ inv(Fp_new)
+        # Plastic step — radial return (BOX 9.1, step 4)
+        n  = s_trial / s_trial_norm
+        Δγ = f_trial / (2μ̄ + T(2)/3 * K)
+
+        s_new = s_trial - 2μ̄ * Δγ * n
+        α_new = α_n + sqrt(T(2)/3) * Δγ
+
+        # Update b̄ᵉ (eq 9.3.33)
+        Ie_bar     = tr(be_bar_tr) / 3
+        be_bar_new = s_new / μ + Ie_bar * I2
+
+        # Recover Fp_new from b̄ᵉ_new via polar decomposition
+        be_tr_sqrt_inv = Tensor{2,3,T,9}(_matrix_function(x -> 1/sqrt(x), be_bar_tr))
+        Fe_tr_iso      = J^(-T(1)/3) * Fe_tr
+        R_tr           = be_tr_sqrt_inv ⋅ Fe_tr_iso
+
+        be_new_sqrt    = Tensor{2,3,T,9}(_matrix_function(sqrt, be_bar_new))
+        Fe_new_iso     = be_new_sqrt ⋅ R_tr
+        Fe_new         = J^(T(1)/3) * Fe_new_iso
+        Fp_new         = inv(Fe_new) ⋅ F
     end
 
-    # PK1: P = Fᵉ⁻ᵀ M Fᵖ⁻ᵀ
-    P = inv(Fe_new)' ⋅ Tensor{2,3,T,9}(M_new) ⋅ inv(Fp_new)'
+    # Kirchhoff stress: τ = J p I + s,  p = κ(J-1)
+    p = κ * (J - one(T))
+    τ = J * p * I2 + s_new
 
-    fp        = Fp_new.data
+    # PK1: P = τ · F⁻ᵀ
+    P = Tensor{2,3,T,9}(τ) ⋅ inv(F)'
+
+    # Energy
+    W = κ / 2 * (J - 1)^2 + μ / 2 * (tr(be_bar_new) - T(3))
+
+    fp = Fp_new.data
     state_new = SVector{10,T}(
-        fp[1], fp[2], fp[3], fp[4], fp[5], fp[6], fp[7], fp[8], fp[9], eqps_new
+        fp[1], fp[2], fp[3], fp[4], fp[5], fp[6], fp[7], fp[8], fp[9], α_new
     )
-    return W, P, state_new
+    return W, P, state_new, s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n
 end
 
 # ---------------------------------------------------------------------------
-# Internal: analytical consistent tangent  ∂P/∂F
+# Internal: Simo-Hughes consistent tangent (BOX 9.2)
+# Uses _convect_tangent from utils/TensorUtils.jl for push-forward.
 # ---------------------------------------------------------------------------
-#
-# Approximation: Fᵖ_new is FROZEN when differentiating P w.r.t. F.
-#   • Elastic step (Fᵖ_new = Fᵖ_old, truly constant): result is exact.
-#   • Plastic step: omitting ∂Fᵖ_new/∂F introduces O(Δεᵖ) relative error,
-#     which is small in practice and preserves quadratic Newton convergence.
-#
-# ∂P/∂F = geometric + material contributions:
-#
-#   Geometric:  −(F⁻ᵀ)_{iL} P_{kJ}
-#   Material:   2 Σ_{ABCD} (Fᵉ_new⁻ᵀ)_{iA} ℂ_{ABCD} (Fᵖ_new⁻ᵀ)_{BJ}
-#                          (Fᵉ_tr)_{kC} (Fᵖ_old⁻¹)_{DL}
-#
-# ℂ assembled in the spectral basis {n_α} of Cᵉ_tr:
-#
-#   Material part:  Σ_{αβ} [ĉ_{αβ}/(2c_β)] (n_α⊗n_α)_{AB} (n_β⊗n_β)_{CD}
-#   Geometric part: Σ_{α≠β} θ_{αβ} (n_α⊗n_β)_sym_{AB} (n_α⊗n_β)_sym_{CD}
-#
-# Principal-space algorithmic moduli ĉ_{αβ} = ∂m_α_new/∂ε_β_tr:
-#   Elastic: ĉ_{αβ} = λ + 2μ δ_{αβ}
-#   Plastic: ĉ_{αβ} = (λ + μβ̄) + 2μ(1 − 3β̄/2) δ_{αβ}
-#                     + (2μβ̄ − 4μ²/(3μ+H)) N̄_α N̄_β
-#            β̄ = 2μ Δεᵖ / σvm_tr,  N̄_α = 1.5 m_dev_α_tr / σvm_tr
-#
-# θ_{αβ} = (m_α_new − m_β_new)/(c_α − c_β)   [L'Hôpital if c_α ≈ c_β]
 
-@inline function _j2_tangent_analytical(
+@inline function _sh_j2_tangent(
     props,
     F::Tensor{2,3,T,9},
     state_old::AbstractVector,
     P::Tensor{2,3,T,9},
-    state_new::AbstractVector,
+    s_new::SymmetricTensor{2,3,T},
+    be_bar_tr::SymmetricTensor{2,3,T},
+    s_trial_norm::T,
+    μ̄::T,
+    Δγ::T,
+    α_n::T,
 ) where T
-    λ = T(props[1]); μ = T(props[2]); σ_y = T(props[3]); H = T(props[4])
+    λ = T(props[1]); μ = T(props[2]); σ_y = T(props[3]); K = T(props[4])
+    κ = λ + 2μ / 3
 
-    Fp_old    = Tensor{2,3,T,9}(ntuple(i -> T(state_old[i]), Val(9)))
-    eqps      = T(state_old[10])
-    Fp_new    = Tensor{2,3,T,9}(ntuple(i -> T(state_new[i]), Val(9)))
-    Δεᵖ       = T(state_new[10]) - eqps
+    J = det(F)
+    F_inv = inv(F)
+    S = F_inv ⋅ P   # 2nd Piola-Kirchhoff
 
-    Fp_old_i  = inv(Fp_old)
-    Fp_new_i  = inv(Fp_new)
-    Fe_tr     = F ⋅ Fp_old_i
-    Fe_new    = F ⋅ Fp_new_i
-    Fe_new_iT = inv(Fe_new)'
-    F_iT      = inv(F)'
+    I2 = one(SymmetricTensor{2,3,T})
+    I4_sym = one(SymmetricTensor{4,3,T})
 
-    # Spectral decomposition of symmetric trial Ce (GPU-compatible)
-    Ce_tr = symmetric(tdot(Fe_tr))
-    c, Q  = _eigen_normalized(Ce_tr)   # c::Vec{3,T}, Q::Tensor{2,3,T,9}
+    # Volumetric spatial tangent
+    coeff_1x1 = κ * J * (2*J - one(T))
+    coeff_I   = 2 * κ * J * (J - one(T))
+    c_vol = coeff_1x1 * (I2 ⊗ I2) - coeff_I * I4_sym
 
-    # Trial principal Hencky strains and Mandel stresses
-    ε_tr    = SVector{3,T}(T(0.5)*log(c[1]), T(0.5)*log(c[2]), T(0.5)*log(c[3]))
-    tr_ε    = ε_tr[1] + ε_tr[2] + ε_tr[3]
-    m_tr    = SVector{3,T}(
-        λ*tr_ε + 2μ*ε_tr[1],
-        λ*tr_ε + 2μ*ε_tr[2],
-        λ*tr_ε + 2μ*ε_tr[3],
-    )
-    tr_m    = m_tr[1] + m_tr[2] + m_tr[3]
-    mdev_tr = SVector{3,T}(m_tr[1] - tr_m/3, m_tr[2] - tr_m/3, m_tr[3] - tr_m/3)
-    σvm_tr  = sqrt(T(3)/2 * (mdev_tr[1]^2 + mdev_tr[2]^2 + mdev_tr[3]^2))
+    # Unit normal
+    s_trial_recomp = μ * dev(be_bar_tr)
+    n = s_trial_norm > zero(T) ? s_trial_recomp / s_trial_norm :
+        zero(SymmetricTensor{2,3,T})
 
-    f_tr = σvm_tr - (σ_y + H * eqps)
+    # Deviatoric trial tangent
+    c_dev_trial = 2μ̄ * (I4_sym - T(1)/3 * (I2 ⊗ I2)) -
+                  T(2)/3 * s_trial_norm * (n ⊗ I2 + I2 ⊗ n)
 
-    if f_tr ≤ zero(T)
-        # Elastic algorithmic moduli: ĉ[α,β] = λ + 2μ δ(α,β)
-        m_new = m_tr
-        ĉ = SMatrix{3,3,T,9}(λ+2μ, λ, λ,  λ, λ+2μ, λ,  λ, λ, λ+2μ)
+    f_trial = s_trial_norm - sqrt(T(2)/3) * (σ_y + K * α_n)
+
+    if f_trial ≤ zero(T)
+        CC_spatial = c_vol + c_dev_trial
     else
-        # Plastic algorithmic moduli
-        N̄ = SVector{3,T}(
-            T(1.5)*mdev_tr[1]/σvm_tr,
-            T(1.5)*mdev_tr[2]/σvm_tr,
-            T(1.5)*mdev_tr[3]/σvm_tr,
-        )
-        m_new = SVector{3,T}(
-            m_tr[1] - 2μ*Δεᵖ*N̄[1],
-            m_tr[2] - 2μ*Δεᵖ*N̄[2],
-            m_tr[3] - 2μ*Δεᵖ*N̄[3],
-        )
-        β̄     = 2μ * Δεᵖ / σvm_tr
-        Ac    = λ + μ * β̄
-        Bc    = 2μ * (1 - T(1.5) * β̄)
-        Ccoef = 2μ * β̄ - 4μ^2 / (3μ + H)
-        ĉ = SMatrix{3,3,T,9}(ntuple(Val(9)) do lin
-            i = (lin - 1) % 3 + 1
-            j = (lin - 1) ÷ 3 + 1
-            Ac + Bc * ifelse(i == j, one(T), zero(T)) + Ccoef * N̄[i] * N̄[j]
-        end)
+        # Plastic correction (BOX 9.2, steps 2-3)
+        β₀ = one(T) + K / (3μ̄)
+        β₁ = 2μ̄ * Δγ / s_trial_norm
+        β₂ = (one(T) - one(T)/β₀) * T(2)/3 * s_trial_norm / μ * Δγ
+        β₃ = one(T)/β₀ - β₁ + β₂
+        β₄ = (one(T)/β₀ - β₁) * s_trial_norm / μ̄
+
+        n_sq = symmetric(n ⋅ n)
+        c_dev_n2 = symmetric(n ⊗ dev(n_sq) + dev(n_sq) ⊗ n) / 2
+
+        CC_spatial = c_vol + c_dev_trial -
+                     β₁ * c_dev_trial -
+                     2μ̄ * β₃ * (n ⊗ n) -
+                     2μ̄ * β₄ * c_dev_n2
     end
 
-    # Assemble ℂ_{ABCD} in principal basis
+    # Pull-back: spatial → material
     CC = MArray{Tuple{3,3,3,3},T,4,81}(ntuple(_ -> zero(T), Val(81)))
-
-    # Material part: Σ_{αβ} [ĉ_{αβ}/(2c_β)] (nα⊗nα)_{AB} (nβ⊗nβ)_{CD}
-    for α in 1:3, β in 1:3
-        coeff = ĉ[α, β] / (2 * c[β])
-        nα = SVector{3,T}(Q[1,α], Q[2,α], Q[3,α])
-        nβ = SVector{3,T}(Q[1,β], Q[2,β], Q[3,β])
-        for A in 1:3, B in 1:3, C in 1:3, D in 1:3
-            CC[A, B, C, D] += coeff * nα[A] * nα[B] * nβ[C] * nβ[D]
+    for A in 1:3, B in 1:3, C in 1:3, D in 1:3
+        val = zero(T)
+        for a in 1:3, b in 1:3, c in 1:3, d in 1:3
+            val += F_inv[A, a] * F_inv[B, b] * CC_spatial[a, b, c, d] * F_inv[C, c] * F_inv[D, d]
         end
+        CC[A, B, C, D] = val
     end
 
-    # Geometric part (α ≠ β): θ_{αβ} (nα⊗nβ)sym_{AB} (nα⊗nβ)sym_{CD}
-    tol = T(1e-10)
-    for α in 1:3, β in 1:3
-        α == β && continue
-        nα = SVector{3,T}(Q[1,α], Q[2,α], Q[3,α])
-        nβ = SVector{3,T}(Q[1,β], Q[2,β], Q[3,β])
-        Δc = c[α] - c[β]
-        θ = if abs(Δc) > tol * (c[α] + c[β])
-            (m_new[α] - m_new[β]) / Δc
-        else
-            # L'Hôpital limit
-            (ĉ[α, α] - ĉ[β, α]) / (2 * c[α])
-        end
-        for A in 1:3, B in 1:3, C in 1:3, D in 1:3
-            sAB = T(0.5) * (nα[A] * nβ[B] + nα[B] * nβ[A])
-            sCD = T(0.5) * (nα[C] * nβ[D] + nα[D] * nβ[C])
-            CC[A, B, C, D] += θ * sAB * sCD
-        end
-    end
-
-    # Assemble AA_{iJkL} = −(F⁻ᵀ)_{iL} P_{kJ}
-    #   + 2 Σ_{ABCD} (Fᵉ_new⁻ᵀ)_{iA} ℂ_{ABCD} (Fᵖ_new⁻ᵀ)_{BJ} (Fᵉ_tr)_{kC} (Fᵖ_old⁻¹)_{DL}
-    Fp_new_iT = Fp_new_i'
-    AA = MArray{Tuple{3,3,3,3},T,4,81}(undef)
-    for i in 1:3, J in 1:3, k in 1:3, L in 1:3
-        val = -F_iT[i, L] * P[k, J]
-        for A in 1:3, B in 1:3, C in 1:3, D in 1:3
-            val += 2 * Fe_new_iT[i, A] * CC[A, B, C, D] *
-                   Fp_new_iT[B, J] * Fe_tr[k, C] * Fp_old_i[D, L]
-        end
-        AA[i, J, k, L] = val
-    end
-    return Tensor{4,3,T,81}(ntuple(i -> AA[i], Val(81)))
+    return _convect_tangent(CC, S, F)
 end
 
 # ---------------------------------------------------------------------------
@@ -273,7 +211,7 @@ function helmholtz_free_energy(
     ∇u, θ, Z_old, Z_new
 )
     F = ∇u + one(∇u)
-    W, _, state_new_vec = _j2_stress(props, F, Z_old)
+    W, _, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old)
     Z_new .= state_new_vec
     return W
 end
@@ -284,7 +222,7 @@ function pk1_stress(
     ∇u, θ, Z_old, Z_new
 )
     F = ∇u + one(∇u)
-    _, P, state_new_vec = _j2_stress(props, F, Z_old)
+    _, P, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old)
     Z_new .= state_new_vec
     return P
 end
@@ -295,7 +233,9 @@ function material_tangent(
     ∇u, θ, Z_old, Z_new
 )
     F = ∇u + one(∇u)
-    _, P, state_new_vec = _j2_stress(props, F, Z_old)
+    W, P, state_new_vec, s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n =
+        _sh_j2_stress(props, F, Z_old)
     Z_new .= state_new_vec
-    return _j2_tangent_analytical(props, F, Z_old, P, state_new_vec)
+    return _sh_j2_tangent(props, F, Z_old, P,
+                           s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n)
 end
