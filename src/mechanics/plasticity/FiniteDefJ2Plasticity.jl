@@ -248,3 +248,5 @@ function material_tangent(
     return _sh_j2_tangent(props, F, Z_old, P,
                            s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n)
 end
+
+p_wave_modulus(::FiniteDefJ2Plasticity, props) = props[1] + 2 * props[2]

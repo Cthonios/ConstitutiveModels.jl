@@ -10,6 +10,7 @@ export cauchy_stress,
        initialize_props,
        initialize_state,
        state_variable_names,
+       p_wave_modulus,
        material_hessian,
        material_tangent,
        pk1_stress

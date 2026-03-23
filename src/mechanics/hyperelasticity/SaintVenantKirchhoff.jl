@@ -83,3 +83,5 @@ function material_tangent(
 
     return _convect_tangent(ℂ, S, F)
 end
+
+p_wave_modulus(::SaintVenantKirchhoff, props) = props[1] + 2 * props[2]

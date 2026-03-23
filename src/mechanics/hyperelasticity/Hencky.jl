@@ -139,3 +139,5 @@ function material_tangent(
 
     return _convect_tangent(ℂ, S, F)
 end
+
+p_wave_modulus(::Hencky, props) = props[1] + 4 * props[2] / 3

@@ -137,3 +137,5 @@ end
 
 #     return _convect_tangent(ℂ, S, F)
 # end
+
+p_wave_modulus(::MooneyRivlin, props) = props[1] + 4 * (props[2] + props[3]) / 3
