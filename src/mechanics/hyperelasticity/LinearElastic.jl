@@ -1,7 +1,7 @@
 """
 $(TYPEDEF)
 """
-struct LinearElastic <: AbstractHyperelasticModel{2, 0}
+struct LinearElastic <: AbstractHyperelastic{2, 0}
 end
 
 """
@@ -12,21 +12,20 @@ function initialize_props(::LinearElastic, inputs::Dict{String})
     return [elastic_props.λ, elastic_props.μ]
 end
 
+function strain_energy_density(model::LinearElastic, props, F::Tensor{2, 3, T, 9}, θ) where T <: Number
+    ∇u = F - one(F)
+    ε = linear_strain(∇u)
+    return strain_energy_density(model, props, ε, θ)
+end
+
 """
 ``\\psi = \\frac{1}{2}\\lambda tr\\left(\\varepsilon\\right)^2
         + \\mu \\varepsilon:\\varepsilon``
 $(TYPEDSIGNATURES)
 """
-function helmholtz_free_energy(
-    ::LinearElastic,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function strain_energy_density(::LinearElastic, props, ε::SymmetricTensor{2, 3, T, 6}, θ) where T <: Number
     # unpack properties
     λ, μ = props[1], props[2]
-
-    # kinematics
-    ε = linear_strain(∇u)
 
     # constitutive
     ψ = 0.5 * λ * tr(ε)^2 + μ * dcontract(ε, ε)
@@ -34,35 +33,15 @@ function helmholtz_free_energy(
     return ψ
 end
 
-function cauchy_stress(
-    model::LinearElastic,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function cauchy_stress(model::LinearElastic, props, F, θ)
     # kinematics
+    ∇u = F - one(F)
     ε = linear_strain(∇u)
     # constitutive
-    return cauchy_stress(model, props, Δt, ε, θ, Z_old, Z_new)
+    return cauchy_stress(model, props, ε, θ)
 end
 
-function pk1_stress(
-    model::LinearElastic, 
-    props, Δt, 
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
-)
-    F = ∇u + one(∇u)
-    J = det(F)
-    σ = cauchy_stress(model, props, Δt, ∇u, θ, Z_old, Z_new)
-    P = J * dot(σ, inv(F)')
-    return P
-end
-
-function cauchy_stress(
-    ::LinearElastic,
-    props, Δt,
-    ε::SymmetricTensor{2, 3, T, 6}, θ, Z_old, Z_new
-) where T <: Number
+function cauchy_stress(::LinearElastic, props, ε::SymmetricTensor{2, 3, T, 6}, θ) where T <: Number
     # unpack properties
     λ, μ = props[1], props[2]
     # constitutive
@@ -71,4 +50,11 @@ function cauchy_stress(
     return σ
 end
 
-p_wave_modulus(::LinearElastic, props) = props[1] + 2 * props[2]
+function pk1_stress(model::LinearElastic, props, F, θ)
+    ∇u = F - one(F)
+    ε = linear_strain(∇u)
+    J = det(F)
+    σ = cauchy_stress(model, props, ε, θ)
+    P = J * σ ⋅ inv(F)'
+    return P
+end

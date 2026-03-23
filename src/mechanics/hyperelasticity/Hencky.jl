@@ -1,7 +1,7 @@
 """
 $(TYPEDEF)
 """
-struct Hencky <: AbstractHyperelasticModel{2, 0}
+struct Hencky <: AbstractHyperelastic{2, 0}
 end
 
 """
@@ -19,16 +19,10 @@ end
 ``
 $(TYPEDSIGNATURES)
 """
-function helmholtz_free_energy(
-    ::Hencky,
-    props, Δt,
-    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new
-) where T <: Number
+function strain_energy_density(::Hencky, props, F, θ)
     κ, μ = props[1], props[2]
 
     # kinematics
-    I = one(typeof(∇u))
-    F = ∇u + I
     C = tdot(F)
     E = 0.5 * log(C)
     trE = tr(E)
@@ -42,15 +36,10 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function pk2_stress(
-    ::Hencky,
-    props, Δt,
-    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new
-) where T <: Number
+function pk2_stress(::Hencky, props, F, θ)
     κ, μ = props[1], props[2]
 
     # kinematics
-    F = ∇u + one(∇u)
     C = tdot(F)
     E = 0.5 * log(C)
     trE = tr(E)
@@ -65,29 +54,18 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function pk1_stress(
-    model::Hencky,
-    props, Δt,
-    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new,
-    ::ForwardDiffAD
-) where T <: Number
-    F = ∇u + one(∇u)
-    S = pk2_stress(model, props, Δt, ∇u, θ, Z_old, Z_new)
+function pk1_stress(model::Hencky, props, F, θ)
+    S = pk2_stress(model, props, F, θ)
     return F ⋅ S
 end
 
 """
 $(TYPEDSIGNATURES)
 """
-function material_tangent(
-    ::Hencky,
-    props, Δt,
-    ∇u::Tensor{2, 3, T, 9}, θ, Z_old, Z_new
-) where T <: Number
+function material_tangent(::Hencky, props, F::Tensor{2, 3, T, 9}, θ) where T <: Number
     κ, μ = props[1], props[2]
 
     # kinematics
-    F  = ∇u + one(∇u)
     C  = tdot(F)
     IC = inv(C)
     I2 = one(C)

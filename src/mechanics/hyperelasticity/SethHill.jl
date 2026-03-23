@@ -17,7 +17,7 @@
 """
 $(TYPEDEF)
 """
-struct SethHill <: AbstractHyperelasticModel{4, 0}
+struct SethHill <: AbstractHyperelastic{4, 0}
 end
 
 """
@@ -33,15 +33,10 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function helmholtz_free_energy(
-    ::SethHill,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function strain_energy_density(::SethHill, props, F, θ)
     κ, μ   = props[1], props[2]
     m, n   = Int(props[3]), Int(props[4])
 
-    F      = ∇u + one(typeof(∇u))
     J      = det(F)
     Jm     = J^m;  Jmm = 1.0 / Jm
     C      = tdot(F)
@@ -57,16 +52,10 @@ function helmholtz_free_energy(
     return W_vol + W_dev
 end
 
-function pk1_stress(
-    ::SethHill,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
-)
+function pk1_stress(::SethHill, props, F, θ, ::ForwardDiffAD)
     κ, μ    = props[1], props[2]
     m, n    = Int(props[3]), Int(props[4])
 
-    F       = ∇u + one(typeof(∇u))
     J       = det(F)
     Jm      = J^m;  J2m = Jm^2;  Jmm = 1.0 / Jm;  Jm2m = 1.0 / J2m
 

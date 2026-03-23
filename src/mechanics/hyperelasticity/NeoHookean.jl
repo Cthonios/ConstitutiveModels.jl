@@ -1,7 +1,7 @@
 """
 $(TYPEDEF)
 """
-struct NeoHookean <: AbstractHyperelasticModel{2, 0}
+struct NeoHookean <: AbstractHyperelastic{2, 0}
 end
 
 """
@@ -17,17 +17,11 @@ end
         + \\frac{1}{2}\\mu\\left(\\bar{I}_1 - 3\\right)``
 $(TYPEDSIGNATURES)
 """
-function helmholtz_free_energy(
-    ::NeoHookean,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function strain_energy_density(::NeoHookean, props, F, θ)
     # unpack properties
     κ, μ = props[1], props[2]
 
     # kinematics
-    I       = one(∇u)
-    F       = ∇u + I
     J       = det(F)
     J_m_13  = 1. / cbrt(J)
     J_m_23  = J_m_13 * J_m_13
@@ -43,13 +37,8 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function pk1_stress(
-    ::NeoHookean,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function pk1_stress(::NeoHookean, props, F, θ)
     κ, μ    = props[1], props[2]
-    F       = ∇u + one(∇u)
     J       = det(F)
     J_m_13  = 1. / cbrt(J)
     J_m_23  = J_m_13 * J_m_13
@@ -73,13 +62,8 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function material_tangent(
-    ::NeoHookean,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function material_tangent(::NeoHookean, props, F, θ)
     κ, μ  = props[1], props[2]
-    F     = ∇u + one(∇u)
     J     = det(F)
     J2    = J * J
     C     = tdot(F)                          # F'F  (SymmetricTensor{2,3})

@@ -1,7 +1,7 @@
 """
 $(TYPEDEF)
 """
-struct MooneyRivlin <: AbstractHyperelasticModel{3,0}  # 3 material props: κ, C1, C2
+struct MooneyRivlin <: AbstractHyperelastic{3,0}  # 3 material props: κ, C1, C2
 end
 
 """
@@ -21,16 +21,10 @@ end
 ``
 $(TYPEDSIGNATURES)
 """
-function helmholtz_free_energy(
-    ::MooneyRivlin,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function strain_energy_density(::MooneyRivlin, props, F, θ)
     κ, C1, C2 = props[1], props[2], props[3]
 
     # kinematics
-    I       = one(typeof(∇u))
-    F       = ∇u + I
     J       = det(F)
     J_m_13  = 1. / cbrt(J)
     J_m_23  = J_m_13 * J_m_13
@@ -51,16 +45,10 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function pk1_stress(
-    ::MooneyRivlin,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
-)
+function pk1_stress(::MooneyRivlin, props, F, θ, ::ForwardDiffAD)
     κ, C1, C2 = props[1], props[2], props[3]
 
     # kinematics
-    F       = ∇u + one(∇u)
     J       = det(F)
     J_m_13  = 1. / cbrt(J)
     J_m_23  = J_m_13 * J_m_13

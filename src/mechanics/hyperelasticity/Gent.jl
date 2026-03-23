@@ -1,7 +1,7 @@
 """
 $(TYPEDEF)
 """
-struct Gent <: AbstractHyperelasticModel{3, 0}
+struct Gent <: AbstractHyperelastic{3, 0}
 end
 
 """
@@ -18,17 +18,11 @@ end
         - \\frac{1}{2}\\mu J_m\\ln\\left(1 - \\frac{\\bar{I}_1 - 3}{Jm}\\right)``
 $(TYPEDSIGNATURES)
 """
-function helmholtz_free_energy(
-    ::Gent,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function strain_energy_density(::Gent, props, F, θ)
     # unpack properties
     κ, μ, Jm = props[1], props[2], props[3]
 
     # kinematics
-    I       = one(typeof(∇u))
-    F       = ∇u + I
     J       = det(F)
     J_m_13  = 1. / cbrt(J)
     J_m_23  = J_m_13 * J_m_13
@@ -41,16 +35,11 @@ function helmholtz_free_energy(
     return ψ
 end
 
-function pk1_stress(
-    ::Gent,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function pk1_stress(::Gent, props, F, θ)
     # unpack properties
     κ, μ, Jm = props[1], props[2], props[3]
 
     # kinematics
-    F       = ∇u + one(typeof(∇u))
     J       = det(F)
     J_m_13  = 1. / cbrt(J)
     J_m_23  = J_m_13 * J_m_13
@@ -64,14 +53,9 @@ function pk1_stress(
     return P
 end
 
-function material_tangent(
-    ::Gent,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function material_tangent(::Gent, props, F, θ)
     κ, μ, Jm = props[1], props[2], props[3]
 
-    F    = ∇u + one(∇u)
     J    = det(F)
     J2   = J * J
     Jm23 = cbrt(J)^(-2)

@@ -18,7 +18,7 @@
 """
 $(TYPEDEF)
 """
-struct SaintVenantKirchhoff <: AbstractHyperelasticModel{2, 0}
+struct SaintVenantKirchhoff <: AbstractHyperelastic{2, 0}
 end
 
 """
@@ -32,26 +32,16 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function helmholtz_free_energy(
-    ::SaintVenantKirchhoff,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function strain_energy_density(::SaintVenantKirchhoff, props, F, θ)
     λ, μ = props[1], props[2]
-    F    = ∇u + one(∇u)
     C    = tdot(F)
     E    = 0.5 * (C - one(C))         # Green-Lagrange strain (SymmetricTensor{2,3})
     trE  = tr(E)
     return 0.5λ * trE^2 + μ * dcontract(E, E)
 end
 
-function pk1_stress(
-    ::SaintVenantKirchhoff,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function pk1_stress(::SaintVenantKirchhoff, props, F, θ)
     λ, μ = props[1], props[2]
-    F    = ∇u + one(∇u)
     C    = tdot(F)
     I    = one(C)
     E    = 0.5 * (C - I)
@@ -66,13 +56,8 @@ end
 # (same index structure as linear elasticity; coefficient = 1 not 2 because the
 #  factor of 2 is absorbed into the ∂E/∂C = ½ I⊙I chain rule).
 # Push-forward via _convect_tangent gives ∂P/∂F.
-function material_tangent(
-    ::SaintVenantKirchhoff,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
-)
+function material_tangent(::SaintVenantKirchhoff, props, F, θ)
     λ, μ = props[1], props[2]
-    F    = ∇u + one(typeof(∇u))
     C    = tdot(F)
     E    = 0.5 * (C - one(C))
     S    = λ * tr(E) * one(E) + 2.0μ * E
