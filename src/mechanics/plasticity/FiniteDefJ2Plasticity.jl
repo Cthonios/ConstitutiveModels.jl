@@ -43,6 +43,15 @@ function initialize_state(::FiniteDefJ2Plasticity, float_type = Float64)
     return float_type[1, 0, 0, 0, 1, 0, 0, 0, 1, 0]   # vec(I) ++ 0
 end
 
+function state_variable_names(::FiniteDefJ2Plasticity)
+    return [
+        "Fp_11", "Fp_21", "Fp_31",
+        "Fp_12", "Fp_22", "Fp_32",
+        "Fp_13", "Fp_23", "Fp_33",
+        "eqps",
+    ]
+end
+
 # ---------------------------------------------------------------------------
 # Internal: Simo-Hughes stress update (BOX 9.1)
 # ---------------------------------------------------------------------------

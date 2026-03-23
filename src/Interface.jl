@@ -30,6 +30,15 @@ function initialize_state(
     return zeros(float_type, NS)
 end
 
+"""
+Return human-readable names for each state variable, in storage order.
+Default fallback generates generic names: ["state_1", "state_2", ...].
+Models should override this to provide meaningful names.
+"""
+function state_variable_names(::AbstractConstitutiveModel{NP, NS}) where {NP, NS}
+    return ["state_$i" for i in 1:NS]
+end
+
 @inline function unpack_props(
     ::AbstractConstitutiveModel{NP, NS},
     props,
