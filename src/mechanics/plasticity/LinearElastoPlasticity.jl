@@ -142,3 +142,11 @@ function unpack_state(::LinearElastoPlasticity, Z)
     α = Z[7]
     return ε_p, α
 end
+
+function state_variable_names(::LinearElastoPlasticity)
+    return [
+        "ep_xx", "ep_yy", "ep_zz",
+        "ep_yz", "ep_xz", "ep_xy",
+        "eqps",
+    ]
+end

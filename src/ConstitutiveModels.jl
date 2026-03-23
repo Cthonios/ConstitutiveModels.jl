@@ -9,6 +9,7 @@ export cauchy_stress,
        helmholtz_free_energy,
        initialize_props,
        initialize_state,
+       state_variable_names,
        material_hessian,
        material_tangent,
        pk1_stress
