@@ -86,3 +86,5 @@ end
 #     P = P_vol + P_dev
 #     return P
 # end
+
+p_wave_modulus(::ArrudaBoyce, props) = props[1] + 4 * props[2] / 3

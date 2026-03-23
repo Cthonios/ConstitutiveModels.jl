@@ -105,3 +105,5 @@ function material_tangent(
     ℂ = ℂ_vol + ℂ_dev
     return _convect_tangent(ℂ, S, F)
 end
+
+p_wave_modulus(::Gent, props) = props[1] + 4 * props[2] / 3

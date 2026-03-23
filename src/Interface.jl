@@ -39,6 +39,12 @@ function state_variable_names(::AbstractConstitutiveModel{NP, NS}) where {NP, NS
     return ["state_$i" for i in 1:NS]
 end
 
+"""
+Return the p-wave modulus M for stable time step estimation.
+Models must override this — no generic fallback.
+"""
+function p_wave_modulus end
+
 @inline function unpack_props(
     ::AbstractConstitutiveModel{NP, NS},
     props,

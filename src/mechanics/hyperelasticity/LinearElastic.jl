@@ -70,3 +70,5 @@ function cauchy_stress(
     σ = λ * tr(ε) * I + 2. * μ * ε
     return σ
 end
+
+p_wave_modulus(::LinearElastic, props) = props[1] + 2 * props[2]

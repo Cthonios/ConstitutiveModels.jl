@@ -92,3 +92,5 @@ function pk1_stress(
 end
 
 # material_tangent falls through to the AD default in CommonMethods.jl
+
+p_wave_modulus(::SethHill, props) = props[1] + 4 * props[2] / 3
