@@ -102,9 +102,20 @@ end
 function pk1_stress(model::AbstractHyperelastic, props, F, θ, ::ForwardDiffAD)
     return Tensors.gradient(z -> strain_energy_density(model, props, z, θ), F)
 end
+function p_wave_modulus(::AbstractHyperelastic, props)
+    @assert "Implement me!"
+end
 abstract type AbstractIsotropicHardening{NP, NS} <: AbstractMechanicalModule{NP, NS} end
 # TODO add abstract interface for isotropic hardening here
 abstract type AbstractViscosity{NP, NS} <: AbstractMechanicalModule{NP, NS} end
+# TODO add abstract interface for abstract viscosity here
+abstract type AbstractViscoelasticity{
+    NP,
+    NS,
+    H <: AbstractHyperelastic,
+    V <: AbstractViscosity
+} <: AbstractMechanicalModule{NP, NS} end
+# TODO add abstract interface for abstract viscoelasticity here
 abstract type AbstractYieldSurface{
     NP, 
     NS,
@@ -139,6 +150,9 @@ end
 # currently assumes that there is one property density
 # plus the property from the mechanical modules
 abstract type AbstractMechanicalModel{NP, NS} <: AbstractConstitutiveModel{NP, NS} end
+function p_wave_modulus(::AbstractMechanicalModel, props)
+    @assert "Implement me!"
+end
 abstract type AbstractThermalModel{NP, NS} <: AbstractConstitutiveModel{NP, NS} end
 abstract type AbstractPlasticityModel{
     NP, 
@@ -146,11 +160,6 @@ abstract type AbstractPlasticityModel{
     E <: AbstractHyperelastic, # elastic model
     Y <: AbstractYieldSurface
 } <: AbstractMechanicalModel{NP, NS} end
-abstract type AbstractThermoMechanicalModel{
-    NP,
-    NS,
-    C <: AbstractConduction
-} <: AbstractConstitutiveModel{NP, NS} end
 
 function elastic_properties(model::AbstractPlasticityModel, props)
     return unpack_props(model.elastic_model, props, 1)
@@ -166,6 +175,37 @@ function initialize_props(model::AbstractPlasticityModel, inputs::Dict{String})
     yield_surf_props = initialize_props(model.yield_surface, inputs)
     return vcat(elastic_props, yield_surf_props)
 end
+
+abstract type AbstractThermoMechanicalModel{
+    NP,
+    NS,
+    C <: AbstractConduction
+} <: AbstractConstitutiveModel{NP, NS} end
+
+function material_hessian(
+    model::AbstractThermoMechanicalModel,
+    props, Δt,
+    ∇u, θ, Z,
+    args...
+)
+    d2ψd∇ud∇u, _ = material_tangent(model, props, Δt, ∇u, θ, Z, args...)
+    d2ψdθdθ, _ = Tensors.hessian(z -> helmholtz_free_energy(
+        model, props, Δt, ∇u, z, Z, args...
+    ), θ)
+    d2ψd∇udθ, _ = Tensors.gradient(y -> Tensors.gradient(z -> 
+        helmholtz_free_energy(model, props, Δt, y, z, Z, args...), θ
+    ), ∇u)
+
+    A = tovoigt(SArray, d2ψd∇ud∇u)
+    B = tovoigt(SArray, d2ψd∇udθ)
+
+    H = vcat(
+        hcat(A, B),
+        hcat(B', d2ψdθdθ)
+    )
+    return H, Z
+end
+
 
 # function unpack_state(
 #     ::AbstractConstitutiveModel{NP, NS1},

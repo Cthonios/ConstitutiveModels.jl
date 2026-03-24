@@ -7,14 +7,15 @@ export cauchy_stress,
        heat_capacity,
        heat_flux,
        helmholtz_free_energy,
+       initialize,
        initialize_model,
        initialize_props,
        initialize_state,
-       state_variable_names,
-       p_wave_modulus,
        material_hessian,
        material_tangent,
-       pk1_stress
+       pk1_stress,
+       p_wave_modulus,
+       state_variable_names
 # hyperelastic
 export ArrudaBoyce,
        Gent,
@@ -86,6 +87,7 @@ include("modules/viscosity/Quadratic.jl")
 include("modules/yield_surfaces/VonMisesYieldSurface.jl")
 
 # actual models below
+include("models/FeFv.jl")
 include("models/FiniteDefJ2Plasticity.jl")
 include("models/Hyperelastic.jl")
 include("models/LinearElastoPlasticity.jl")

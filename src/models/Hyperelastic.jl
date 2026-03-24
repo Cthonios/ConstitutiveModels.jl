@@ -49,3 +49,5 @@ function pk1_stress(
     F = ∇u + one(∇u)
     return pk1_stress(model.strain_energy_density, props, F, θ)
 end
+
+p_wave_modulus(model::Hyperelastic, props) = p_wave_modulus(model.strain_energy_density, props)
