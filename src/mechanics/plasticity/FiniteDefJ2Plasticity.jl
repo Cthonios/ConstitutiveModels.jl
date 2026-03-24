@@ -45,9 +45,9 @@ end
 
 function state_variable_names(::FiniteDefJ2Plasticity)
     return [
-        "Fp_11", "Fp_21", "Fp_31",
-        "Fp_12", "Fp_22", "Fp_32",
-        "Fp_13", "Fp_23", "Fp_33",
+        "Fp_xx", "Fp_yx", "Fp_zx",
+        "Fp_xy", "Fp_yy", "Fp_zy",
+        "Fp_xz", "Fp_yz", "Fp_zz",
         "eqps",
     ]
 end
