@@ -1,6 +1,6 @@
 abstract type AbstractThermoMechanicalModel{
     NP, NS, 
-    M <: AbstractMechanicalModel,
+    M <: AbstractMechanicalModule,
     T <: AbstractThermalModel 
 } <: AbstractConstitutiveModel{NP, NS} end
 

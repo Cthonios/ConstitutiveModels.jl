@@ -168,8 +168,8 @@ function _motion_objective(
         0.,     x,  0.,
         0.,     0., x
     ))
-    props, Δt, θ, Z_old, Z_new = model_inputs
-    σ = pk1_stress(model, props, Δt, ∇u, θ, Z_old, Z_new)
+    props, Δt, Z_old, Z_new, θ = model_inputs
+    σ = pk1_stress(model, props, Δt, Z_old, Z_new, ∇u, θ)
     return σ[2, 2]
 end
 
@@ -209,15 +209,14 @@ end
 function simulate_material_point(
     f,
     model::AbstractConstitutiveModel{NP, NS},
-    props, Δt,
-    θ, Z_old, Z_new,
-    motion::AbstractSimpleMotion,
+    props, Δt, Z_old, Z_new,
+    motion::AbstractSimpleMotion, θ,
     args...
 ) where {NP, NS}
     
 
     ∇u = zero(Tensor{2, 3, typeof(θ), 9})
-    result_type = typeof(f(model, props, Δt, ∇u, θ, Z_old, Z_new))
+    result_type = typeof(f(model, props, Δt, Z_old, Z_new, ∇u, θ))
 
     ∇us = Tensor{2, 3, typeof(θ), 9}[]
     results = result_type[]
@@ -228,12 +227,12 @@ function simulate_material_point(
             # @assert false
             ∇u = displacement_gradient(
                 motion, params..., 
-                model, (props, Δt, θ, Z_old, Z_new)
+                model, (props, Δt, Z_old, Z_new, θ)
             )
         else
             ∇u = displacement_gradient(motion, params...)
         end
-        a = f(model, props, Δt, ∇u, θ, Z_old, Z_new)
+        a = f(model, props, Δt, Z_old, Z_new, ∇u, θ)
         push!(∇us, ∇u)
         push!(results, a)
         push!(state_news, copy(Z_new))

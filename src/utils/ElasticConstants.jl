@@ -1,18 +1,31 @@
+const _ELASTIC_CONSTANT_ALIASES = Dict{String, String}(
+    "elastic modulus"       => "Young's modulus",
+    "young's modulus"       => "Young's modulus",
+    "youngs modulus"        => "Young's modulus",
+    "poisson's ratio"       => "Poisson's ratio",
+    "poissons ratio"        => "Poisson's ratio",
+    "bulk modulus"          => "bulk modulus",
+    "shear modulus"         => "shear modulus",
+    "lame's first constant" => "Lamé's first constant",
+    "lames first constant"  => "Lamé's first constant",
+    "lamé's first constant" => "Lamé's first constant"
+)
+
 struct ElasticConstantsException <: Exception
     msg::String
 end
 
 function Base.showerror(io::IO, e::ElasticConstantsException)
-    names = [
-        "bulk modulus",
-        "Lamé's first constant",
-        "Poisson's ratio",
-        "shear modulus",
-        "Young's Modulus"
-    ]
+    # names = [
+    #     "bulk modulus",
+    #     "Lamé's first constant",
+    #     "Poisson's ratio",
+    #     "shear modulus",
+    #     "Young's Modulus"
+    # ]
     println(io, typeof(e), "\n", e.msg)
     println(io, "Possible values include:")
-    for name in names
+    for name in _ELASTIC_CONSTANT_ALIASES
         println(io, "  $name")
     end
 end
@@ -50,6 +63,13 @@ function ElasticConstants(params::Dict{String})
     κ = 0.0
     λ = 0.0
     μ = 0.0
+    for k in keys(params)
+        if haskey(_ELASTIC_CONSTANT_ALIASES, k)
+            alias = _ELASTIC_CONSTANT_ALIASES[k]
+            params[alias] = params[k]
+        end
+    end
+
     if haskey(params, "Young's modulus") == true
         E = params["Young's modulus"]
         if haskey(params, "Poisson's ratio") == true

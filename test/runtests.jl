@@ -3,6 +3,92 @@ using ConstitutiveModels
 using Tensors
 using Test
 
+function basis(k, l)
+    return Tensor{2, 3, Float64, 9}((i, j) -> i == k && j == l ? 1 : 0)
+end
+
+"""
+    fd_material_tangent(model, props, Δt, ∇u, θ, Z_old, Z_new; h=cbrt(eps(eltype(∇u))))
+
+Compute a finite difference approximation of the first Piola-Kirchhoff stress
+tensor **P** = ∂ψ/∂F by perturbing each component of the displacement gradient
+∇u (i.e. the deformation gradient F = I + ∇u, or just F passed directly
+depending on the model convention) with a central-difference stencil:
+
+    A_ijkl ≈ [P(F + h·ei⊗ej⊗ek⊗el) - P(F - h·ei⊗ej⊗ek⊗el)] / (2h)
+"""
+function fd_material_tangent(
+    model,
+    props,
+    Δt,
+    Z_old,
+    Z_new,
+    ∇u::Tensor{2, 3, T, 9},
+    θ,;
+    h::T = cbrt(eps(T))
+) where T
+    data = ()
+    for l in 1:3, k in 1:3
+        δ = basis(k, l)
+
+        ∇u_fwd = ∇u + h * δ
+        ∇u_bwd = ∇u - h * δ
+
+        P_fwd = pk1_stress(model, props, Δt, Z_old, Z_new, ∇u_fwd, θ)
+        P_bwd = pk1_stress(model, props, Δt, Z_old, Z_new, ∇u_bwd, θ)
+
+        ΔP = (P_fwd - P_bwd) / (2h)
+
+        for j in 1:3, i in 1:3
+            data = (data..., ΔP[i, j])
+        end
+    end
+    return Tensor{4, 3, T, 81}(data)
+end
+
+"""
+    fd_pk1_stress(model, props, Δt, ∇u, θ, Z_old, Z_new; h=cbrt(eps(eltype(∇u))))
+
+Compute a finite difference approximation of the first Piola-Kirchhoff stress
+tensor **P** = ∂ψ/∂F by perturbing each component of the displacement gradient
+∇u (i.e. the deformation gradient F = I + ∇u, or just F passed directly
+depending on the model convention) with a central-difference stencil:
+
+    P_iJ ≈ [ψ(F + h·ei⊗ej) - ψ(F - h·ei⊗ej)] / (2h)
+"""
+function fd_pk1_stress(
+    model,
+    props,
+    Δt,
+    Z_old,
+    Z_new,
+    ∇u::Tensor{2, 3, T, 9},
+    θ;
+    h::T = cbrt(eps(T))
+) where T
+    data = ()
+    for j in 1:3, i in 1:3
+        δ = basis(i, j)
+
+        # second order accurate
+        ∇u_fwd = ∇u + h * δ
+        ∇u_bwd = ∇u - h * δ
+        ψ_fwd = helmholtz_free_energy(model, props, Δt, Z_old, Z_new, ∇u_fwd, θ)
+        ψ_bwd = helmholtz_free_energy(model, props, Δt, Z_old, Z_new, ∇u_bwd, θ)
+        val = (ψ_fwd - ψ_bwd) / (2h)
+        # data = (data..., (ψ_fwd - ψ_bwd) / (2h))
+        # fourth order accurate
+        # ψ_fwd2 = helmholtz_free_energy(model, props, Δt, ∇u + 2h * δ, θ, Z_old, Z_new)
+        # ψ_fwd1 = helmholtz_free_energy(model, props, Δt, ∇u +  h * δ, θ, Z_old, Z_new)
+        # ψ_bwd1 = helmholtz_free_energy(model, props, Δt, ∇u -  h * δ, θ, Z_old, Z_new)
+        # ψ_bwd2 = helmholtz_free_energy(model, props, Δt, ∇u - 2h * δ, θ, Z_old, Z_new)
+        # val    = (-ψ_fwd2 + 8ψ_fwd1 - 8ψ_bwd1 + ψ_bwd2) / (12h)
+        data = (data..., val)
+    end
+
+    return Tensors.Tensor{2, 3, T, 9}(data)
+end
+
 function test_strain_eq(::UniaxialStressDisplacementControl, εs, ε_xx_ans, ε_yy_ans)
     @assert length(εs) == length(ε_xx_ans)
     @assert length(εs) == length(ε_yy_ans)

@@ -14,8 +14,8 @@ end
 
 function helmholtz_free_energy(
     model::LinearElastoPlasticity,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
+    props, Δt, Z_old, Z_new,
+    ∇u, θ
 )
     # unpack props
     elastic_props = elastic_properties(model, props)
@@ -31,8 +31,8 @@ function helmholtz_free_energy(
     # calculate elastic trial stress
     ε_e_tr = ε - ε_p_old
     σ_e_tr = cauchy_stress(
-        model.elastic_model, elastic_props, Δt,
-        ε_e_tr, θ, Z_old, Z_new
+        model.elastic_model, elastic_props,
+        ε_e_tr, θ
     )
 
     # update state
@@ -42,10 +42,10 @@ function helmholtz_free_energy(
     ε_e = ε - ε_p_new
 
     # energies
-    ψ_e = helmholtz_free_energy(
+    ψ_e = strain_energy_density(
         model.elastic_model, 
-        elastic_props, Δt,
-        ε_e, θ, Z_old, Z_new
+        elastic_props,
+        ε_e, θ
     )
     # TODO need to cleanup interface to hardening
     ψ_hard = energy(model.yield_surface.isotropic_hardening, yield_props, α_new)
@@ -59,8 +59,8 @@ end
 
 function cauchy_stress(
     model::LinearElastoPlasticity,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
+    props, Δt, Z_old, Z_new,
+    ∇u, θ
 )
     # unpack props
     elastic_props = elastic_properties(model, props)
@@ -76,8 +76,8 @@ function cauchy_stress(
     # calculate elastic trial stress
     ε_e_tr = ε - ε_p_old
     σ_e_tr = cauchy_stress(
-        model.elastic_model, elastic_props, Δt,
-        ε_e_tr, θ, Z_old, Z_new
+        model.elastic_model, elastic_props,
+        ε_e_tr, θ
     )
 
     # update state
@@ -89,8 +89,8 @@ function cauchy_stress(
     # TODO need to fix this to be σ = σ_tr - 2μΔγN I think?
     # check Simo and Hughes
     σ_e = cauchy_stress(
-        model.elastic_model, elastic_props, Δt,
-        ε_e, θ, Z_old, Z_new
+        model.elastic_model, elastic_props,
+        ε_e, θ
     )
 
     # pack state

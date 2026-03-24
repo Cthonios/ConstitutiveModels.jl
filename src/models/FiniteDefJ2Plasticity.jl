@@ -216,8 +216,8 @@ end
 
 function helmholtz_free_energy(
     ::FiniteDefJ2Plasticity,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
+    props, Δt, Z_old, Z_new,
+    ∇u, θ
 )
     F = ∇u + one(∇u)
     W, _, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old)
@@ -227,8 +227,8 @@ end
 
 function pk1_stress(
     ::FiniteDefJ2Plasticity,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
+    props, Δt, Z_old, Z_new,
+    ∇u, θ
 )
     F = ∇u + one(∇u)
     _, P, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old)
@@ -238,8 +238,8 @@ end
 
 function material_tangent(
     ::FiniteDefJ2Plasticity,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
+    props, Δt, Z_old, Z_new,
+    ∇u, θ
 )
     F = ∇u + one(∇u)
     W, P, state_new_vec, s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n =

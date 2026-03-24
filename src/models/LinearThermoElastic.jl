@@ -1,17 +1,17 @@
 struct LinearThermoElastic{
     NP, NS,
-    M <: LinearElastic,
-    T <: FouriersLaw
-} <: AbstractThermoMechanicalModel{NP, NS, M, T}
+    C <: FouriersLaw,
+    M <: LinearElastic
+} <: AbstractThermoMechanicalModel{NP, NS, C}
+    thermal_model::C
     elastic_model::M
-    thermal_model::T
 end
 
 function LinearThermoElastic()
-    elastic_model = LinearElastic()
     thermal_model = FouriersLaw()
+    elastic_model = LinearElastic()
     return LinearThermoElastic{
-        6, 0, typeof(elastic_model), typeof(thermal_model)
+        6, 0, typeof(thermal_model), typeof(elastic_model)
     }(elastic_model, thermal_model)
 end
 
@@ -30,8 +30,8 @@ end
 
 function helmholtz_free_energy(
     model::LinearThermoElastic,
-    props, Δt,
-    ∇u, θ, Z
+    props, Δt, Z_old, Z_new,
+    ∇u, θ
 )
     # unpack properties
     λ, μ, β, θ_0, c, _ = props
@@ -43,8 +43,8 @@ function helmholtz_free_energy(
     # purely elastic part
     ψ_e, _ = helmholtz_free_energy(
         model.elastic_model,
-        elastic_props, Δt,
-        ∇u, θ, Z
+        elastic_props, Δt, Z_old, Z_new,
+        ∇u, θ
     )
 
     # purely therml part
@@ -53,6 +53,5 @@ function helmholtz_free_energy(
     # mixed term
     ψ_mixed = β * (θ - θ_0) * tr(ε)
 
-    Z = typeof(Z)()
-    return ψ_e + ψ_t + ψ_mixed, Z
+    return ψ_e + ψ_t + ψ_mixed
 end

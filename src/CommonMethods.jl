@@ -16,39 +16,37 @@ $(TYPEDSIGNATURES)
 """
 function cauchy_stress(
     model::ModelsWithMechanics,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    args...
+    props, Δt, Z_old, Z_new,
+    ∇u, θ, args...
 )
     F = ∇u + one(∇u)
     J = det(F)
-    P = pk1_stress(model, props, Δt, ∇u, θ, Z_old, Z_new, args...)
-    # σ = (1. / J) * dot(P, F')
-    σ = (1 / J) * P ⋅ transpose(F)
+    P = pk1_stress(model, props, Δt, Z_old, Z_new, ∇u, θ, args...)
+    σ = (1 / J) * symmetric(P ⋅ transpose(F))
     return σ
 end
 
 function entropy(
     model::ModelsWithThermal,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
+    props, Δt, Z_old, Z_new,
+    ∇u, θ, args...
 )
     return entropy(
+        ForwardDiffAD(),
         model, props, Δt,
-        ∇u, θ, Z_old, Z_new,
-        ForwardDiffAD()
+        ∇u, θ, Z_old, Z_new
     )
 end
 
 function heat_capacity(
     model::ModelsWithThermal,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
+    props, Δt, Z_old, Z_new,
+    ∇u, θ, args...
 )
     return heat_capacity(
-        model, props, Δt,
-        ∇u, θ, Z_old, Z_new,
-        ForwardDiffAD()
+        ForwardDiffAD(),
+        model, props, Δt, Z_old, Z_new,
+        ∇u, θ, args...
     )
 end
 
@@ -69,8 +67,8 @@ $(TYPEDSIGNATURES)
 """
 function helmholtz_free_energy(
     ::ModelsWithMechanics,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
+    props, Δt, Z_old, Z_new,
+    ∇u, θ, args...
 )
     @assert false "Needs to be implemented"
 end
@@ -99,13 +97,13 @@ $(TYPEDSIGNATURES)
 """
 function material_tangent(
     model::ModelsWithMechanics,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new
+    props, Δt, Z_old, Z_new,
+    ∇u, θ, args...
 )
     return material_tangent(
-        model, props, Δt,
-        ∇u, θ, Z_old, Z_new,
-        ForwardDiffAD()
+        ForwardDiffAD(),
+        model, props, Δt, Z_old, Z_new,
+        ∇u, θ, args...
     )
 end
 
@@ -133,23 +131,23 @@ $(TYPEDSIGNATURES)
 """
 function pk1_stress(
     model::ModelsWithMechanics,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new,
+    props, Δt, Z_old, Z_new,
+    ∇u, θ, args...
 )
     return pk1_stress(
-        model, props, Δt,
-        ∇u, θ, Z_old, Z_new,
-        ForwardDiffAD()
+        ForwardDiffAD(),
+        model, props, Δt, Z_old, Z_new,
+        ∇u, θ, args...
     )
 end
 
 # ForwardDiff wrappers
 
 function entropy(
+    ::ForwardDiffAD,
     model::ModelsWithThermal,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     η = -Tensors.gradient(z -> 
         helmholtz_free_energy(model, props, Δt, ∇u, z, Z_old, Z_new),
@@ -159,10 +157,10 @@ function entropy(
 end
 
 function heat_capacity(
+    ::ForwardDiffAD,
     model::ModelsWithThermal,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     c = -θ * Tensors.hessian(z -> 
         helmholtz_free_energy(model, props, Δt, ∇u, z, Z_old, Z_new),
@@ -172,25 +170,25 @@ function heat_capacity(
 end
 
 function material_tangent(
+    ::ForwardDiffAD,
     model::ModelsWithMechanics,
     props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    ∇u, θ, Z_old, Z_new
 )
     return Tensors.gradient(z -> 
-        pk1_stress(model, props, Δt, z, θ, Z_old, Z_new, ForwardDiffAD()),
+        pk1_stress(ForwardDiffAD(), model, props, Δt, z, θ, Z_old, Z_new),
         ∇u
     )
 end
 
 function pk1_stress(
+    ::ForwardDiffAD,
     model::ModelsWithMechanics,
-    props, Δt,
-    ∇u, θ, Z_old, Z_new,
-    ::ForwardDiffAD
+    props, Δt, Z_old, Z_new,
+    ∇u, θ, args...
 )
     return Tensors.gradient(z -> 
-        helmholtz_free_energy(model, props, Δt, z, θ, Z_old, Z_new),
+        helmholtz_free_energy(model, props, Δt, Z_old, Z_new, z, θ, args...),
         ∇u
     )
 end
