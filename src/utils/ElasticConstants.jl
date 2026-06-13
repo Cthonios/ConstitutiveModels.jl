@@ -51,25 +51,25 @@ function ElasticConstants(params::Dict{String})
     λ = 0.0
     μ = 0.0
     if haskey(params, "Young's modulus") == true
-        E = params["Young's modulus"]
+        E = params["Young's modulus"]::Float64
         if haskey(params, "Poisson's ratio") == true
-            ν = params["Poisson's ratio"]
+            ν = params["Poisson's ratio"]::Float64
             κ = E / 3(1 - 2ν)
             λ = E * ν / (1 + ν) / (1 - 2ν)
             μ = E / 2(1 + ν)
         elseif haskey(params, "bulk modulus") == true
-            κ = params["bulk modulus"]
+            κ = params["bulk modulus"]::Float64
             ν = (3κ - E) / 6κ
             λ = (3κ * (3κ - E)) / (9κ - E)
             μ = 3κ * E / (9κ - E)
         elseif haskey(params, "Lamé's first constant") == true
-            λ = params["Lamé's first constant"]
+            λ = params["Lamé's first constant"]::Float64
             R = sqrt(E^2 + 9λ^2 + 2E * λ)
             ν = 2λ / (E + λ + R)
             κ = (E + 3λ + R) / 6
             μ = (E - 3λ + R) / 4
         elseif haskey(params, "shear modulus") == true
-            μ = params["shear modulus"]
+            μ = params["shear modulus"]::Float64
             ν = E / 2μ - 1
             κ = E * μ / 3(3μ - E)
             λ = μ * (E - 2μ) / (3μ - E)
@@ -77,19 +77,19 @@ function ElasticConstants(params::Dict{String})
             elastic_constants_error("Two elastic constants are required but only elastic modulus found")
         end
     elseif haskey(params, "Poisson's ratio") == true
-        ν = params["Poisson's ratio"]
+        ν = params["Poisson's ratio"]::Float64
         if haskey(params, "bulk modulus") == true
-            κ = params["bulk modulus"]
+            κ = params["bulk modulus"]::Float64
             E = 3κ * (1 - 2ν)
             λ = 3κ * ν / (1 + ν)
             μ = 3κ * (1 - 2ν) / 2(1 + ν)
         elseif haskey(params, "Lamé's first constant") == true
-            λ = params["Lamé's first constant"]
+            λ = params["Lamé's first constant"]::Float64
             E = λ * (1 + ν) * (1 - 2ν) / ν
             κ = λ * (1 + ν) / 3ν
             μ = λ * (1 - 2ν) / 2ν
         elseif haskey(params, "shear modulus") == true
-            μ = params["shear modulus"]
+            μ = params["shear modulus"]::Float64
             E = 2μ * (1 + ν)
             κ = 2μ * (1 + ν) / 3(1 - 2ν)
             λ = 2μ * ν / (1 - 2ν)
@@ -97,14 +97,14 @@ function ElasticConstants(params::Dict{String})
             elastic_constants_error("Two elastic constants are required but only Poisson's ratio found")
         end
     elseif haskey(params, "bulk modulus") == true
-        κ = params["bulk modulus"]
+        κ = params["bulk modulus"]::Float64
         if haskey(params, "Lamé's first constant") == true
-            λ = params["Lamé's first constant"]
+            λ = params["Lamé's first constant"]::Float64
             E = 9κ * (κ - λ) / (3κ - λ)
             ν = λ / (3κ - λ)
             μ = 3(κ - λ) / 2
         elseif haskey(params, "shear modulus") == true
-            μ = params["shear modulus"]
+            μ = params["shear modulus"]::Float64
             E = 9κ * μ / (3κ + μ)
             ν = (3κ - 2μ) / 2(3κ + μ)
             λ = κ - 2μ / 3
@@ -112,9 +112,9 @@ function ElasticConstants(params::Dict{String})
             elastic_constants_error("Two elastic constants are required but only bulk modulus found")
         end
     elseif haskey(params, "Lamé's first constant") == true
-        λ = params["Lamé's first constant"]
+        λ = params["Lamé's first constant"]::Float64
         if haskey(params, "shear modulus") == true
-            μ = params["shear modulus"]
+            μ = params["shear modulus"]::Float64
             E = μ * (3λ + 2μ) / (λ + μ)
             ν = λ / 2(λ + μ)
             κ = λ + 2μ / 3
