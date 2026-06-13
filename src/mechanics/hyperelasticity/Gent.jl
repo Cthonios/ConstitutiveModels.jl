@@ -9,7 +9,7 @@ $(TYPEDSIGNATURES)
 """
 function initialize_props(::Gent, inputs::Dict{String})
     elastic_props = ElasticConstants(inputs)
-    Jm = inputs["Jm"]
+    Jm = inputs["Jm"]::Float64
     return [elastic_props.κ, elastic_props.μ, Jm]
 end
 
