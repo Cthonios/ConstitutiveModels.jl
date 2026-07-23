@@ -1,5 +1,7 @@
+import ConstitutiveModels as CM
 using Aqua
 using ConstitutiveModels
+using TabularFunctions
 using Tensors
 using Test
 
@@ -59,20 +61,37 @@ function test_stress_eq(::M, σs, σ_xx_ans, σ_yy_ans; atol=1e-10, rtol=1e-10) 
     end
 end
 
-@testset "Elastic constants" begin
-    include("TestElasticConstants.jl")
-end
-
-@testset "Hyperelastic models" begin
-    include("TestHyperelasticModels.jl")
-end
-
-@testset "Plasticity models" begin
-    include("TestPlasticityModels.jl")
-end
-
 @testset "Utils" begin
-    include("TestUtils.jl")
+    @testset "Elastic constants" begin
+        include("utils/TestElasticConstants.jl")
+    end
+    @testset "Material symmetry" begin
+        include("utils/TestMaterialSymmetry.jl")
+    end
+    @testset "Additional tensor math" begin
+        include("utils/TestMath.jl")
+    end
+end
+
+@testset "Modules" begin
+    @testset "Heat conduction" begin
+        include("modules/TestHeatConduction.jl")
+    end
+    @testset "Hyperelasticity" begin
+        include("modules/TestHyperelasticity.jl")
+    end
+    @testset "Plasticity" begin
+        include("modules/TestIsotropicHardening.jl")
+        include("modules/TestYieldSurfaces.jl")
+    end
+    @testset "Thermal expansion" begin
+        include("modules/TestThermalExpansion.jl")
+    end
+end
+
+@testset "Models" begin
+    include("models/TestLinearElastic.jl")
+    include("models/TestLinearElastoplastic.jl")
 end
 
 @testset "Aqua" begin
