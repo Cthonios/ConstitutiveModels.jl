@@ -58,6 +58,7 @@ export LinearThermalExpansion
 export VonMises
 
 # actual models
+export FiniteDefJ2Plasticity
 export Hyperelastic
 export Hypoelastic
 export LinearElastic
@@ -92,6 +93,7 @@ include("modules/plasticity/Plasticity.jl")
 include("modules/thermal_expansion/ThermalExpansion.jl")
 
 # models
+include("models/FiniteDefJ2Plasticity.jl")
 include("models/Hyperelastic.jl")
 include("models/Hypoelastic.jl")
 include("models/LinearElastic.jl")

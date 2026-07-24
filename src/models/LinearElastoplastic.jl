@@ -121,7 +121,7 @@ function spatial_tangent(
     return C
 end
 
-function p_wave_modulus(::LinearElastoplastic, props) 
+function p_wave_modulus(model::LinearElastoplastic, props)
     props = module_props(model.elastic_model, props, 2)
     return p_wave_modulus(model.elastic_model, props)
 end

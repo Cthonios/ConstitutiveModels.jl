@@ -42,7 +42,7 @@ function material_tangent(
     return material_tangent(model.model, props, ∇u, θ)
 end
 
-function p_wave_modulus(::Hyperelastic, props) 
+function p_wave_modulus(model::Hyperelastic, props)
     props = module_props(model.model, props, 2)
     return p_wave_modulus(model.model, props)
 end

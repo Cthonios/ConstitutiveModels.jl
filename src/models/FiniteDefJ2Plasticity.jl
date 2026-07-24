@@ -14,7 +14,8 @@
 #   Z[1:9]  = vec(Fᵖ)  column-major; initial value = vec(I₃)
 #   Z[10]   = α        accumulated equivalent plastic strain; initial 0
 #
-# Properties (NP = 4): [λ, μ, σ_y, H]
+# Properties (NP = 5): [ρ, λ, μ, σ_y, H]
+#   ρ     : Lagrangian-frame density; every model carries it as props[1]
 #   λ, μ  : Lamé constants (converted to κ = λ + 2μ/3 internally)
 #   σ_y   : initial yield stress
 #   H     : linear isotropic hardening modulus
@@ -22,7 +23,7 @@
 """
 $(TYPEDEF)
 """
-struct FiniteDefJ2Plasticity <: AbstractMechanicalModel{4, 10}
+struct FiniteDefJ2Plasticity <: AbstractConstitutiveModel
 end
 
 """
@@ -242,7 +243,7 @@ end
 
 function material_tangent(
     ::FiniteDefJ2Plasticity,
-    props, Δt, Z_old, Z_new,
+    props, Z_old, Z_new, Δt,
     ∇u, θ
 )
     F = ∇u + one(∇u)
@@ -251,6 +252,28 @@ function material_tangent(
     Z_new .= state_new_vec
     return _sh_j2_tangent(props, F, Z_old, P,
                            s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n)
+end
+
+"""
+Cauchy stress σ = J⁻¹ P Fᵀ.
+
+`FiniteDefJ2Plasticity` subtypes `AbstractConstitutiveModel` directly rather
+than `AbstractHyperelasticModel` -- it is path dependent, so the hyperelastic
+defaults (AD tangents from a stored energy) do not apply to it.  That also means
+it does not inherit the hyperelastic `cauchy_stress` fallback, so the push-forward
+is written out here.  Consumers that report stress (e.g. Carina's output writer)
+call this.
+$(TYPEDSIGNATURES)
+"""
+function cauchy_stress(
+    model::FiniteDefJ2Plasticity,
+    props, Z_old, Z_new, Δt,
+    ∇u, θ
+)
+    F = ∇u + one(∇u)
+    J = det(F)
+    P = pk1_stress(model, props, Z_old, Z_new, Δt, ∇u, θ)
+    return (1 / J) * dot(P, transpose(F))
 end
 
 p_wave_modulus(::FiniteDefJ2Plasticity, props) = props[2] + 2 * props[3]
