@@ -7,6 +7,7 @@ export as_tensor,
        deformation_gradient,
        density,
        displacement_gradient,
+       dissipation,
        entropy,
        heat_capacity,
        heat_flux,
@@ -77,8 +78,7 @@ include("utils/Eigen.jl")
 include("utils/ElasticConstants.jl")
 include("utils/Kinematics.jl")
 include("utils/MaterialSymmetry.jl")
-include("utils/Names.jl")
-# include("utils/Solvers.jl")
+include("utils/StateVariables.jl")
 include("utils/TensorUtils.jl")
 
 include("Interface.jl")

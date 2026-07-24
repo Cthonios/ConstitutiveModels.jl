@@ -6,7 +6,8 @@ abstract type AbstractHeatConduction <: AbstractConstitutiveModule end
 function map_temperature_gradient(∇u::Tensor{2, 3, T, 9}, ∇θ) where T <: Number
     F = ∇u + one(∇u)
     C_inv = inv(tdot(F))
-    return C_inv * ∇θ
+    # return C_inv * ∇θ
+    return dot(C_inv, ∇θ)
 end
 
 # linear kinematics
@@ -45,8 +46,7 @@ $(TYPEDSIGNATURES)
 """
 function initialize_props(model::FouriersLaw, inputs::Dict{String})
     if isa(model.symmetry, Isotropy{2})
-        k = inputs["thermal conductivity"]
-        return SVector{1, typeof(k)}(k)
+        return [initialize_props(model.symmetry, inputs, ["thermal conductivity"])...]
     else
         @assert false "Currently unsupported material symmetry type $(model.symmetry)"
     end
@@ -60,10 +60,8 @@ function dissipation(model::FouriersLaw, props, kin, θ, ∇θ)
     return -(1 / (θ * θ)) * dot(q, ∇θ)
 end
 
-function heat_flux(::FouriersLaw, props, kin, θ, ∇θ)
-    # k = props[1]
+function heat_flux(model::FouriersLaw, props, kin, θ, ∇θ)
     k = as_tensor(model.symmetry, props)
     ∇θ = map_temperature_gradient(kin, ∇θ)
-    # return -k * ∇θ
     return -dot(k, ∇θ)
 end

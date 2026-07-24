@@ -19,7 +19,7 @@ function pk1_stress(model::AbstractHyperelasticity, props, ∇u, θ)
 end
 
 # AD default
-function material_tangent(::AbstractHyperelasticity, props, ∇u, θ)
+function material_tangent(model::AbstractHyperelasticity, props, ∇u, θ)
     return Tensors.gradient(z -> pk1_stress(model, props, z, θ), ∇u)
 end
 

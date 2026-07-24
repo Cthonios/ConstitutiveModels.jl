@@ -3,10 +3,10 @@ struct LinearElastoplastic{I} <: AbstractLinearElasticModel
     yield_surface::VonMises{I}
 end
 
-function LinearElastoplastic(isotropic_hardening)
+function LinearElastoplastic(yield_surface::AbstractYieldSurface)
     return LinearElastoplastic(
         LinearElasticity(),
-        VonMises(isotropic_hardening)
+        yield_surface
     )
 end
 

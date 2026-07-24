@@ -1,4 +1,9 @@
 struct UnImplementedMethodError <: Exception
+    msg::String
+end
+
+function Base.showerror(io::IO, err::UnImplementedMethodError)
+    print(io, err.msg)
 end
 
 abstract type AbstractConstitutive end
@@ -18,8 +23,8 @@ Default state constructor to just return zeros
 function initialize_state(c::AbstractConstitutive)
     return zeros(num_state_variables(c))
 end
-num_properties(::AbstractConstitutive) = throw(UnImplementedMethodError())
-num_state_variables(::AbstractConstitutive) = throw(UnImplementedMethodError())
+num_properties(model::AbstractConstitutive) = throw(UnImplementedMethodError("Need to implement num_properties method $(typeof(model))."))
+num_state_variables(model::AbstractConstitutive) = throw(UnImplementedMethodError("Need to implement num_state_variables method for $(typeof(model))"))
 """
 Return human-readable names for each state variable, in storage order.
 Default fallback generates generic names: ["state_1", "state_2", ...].

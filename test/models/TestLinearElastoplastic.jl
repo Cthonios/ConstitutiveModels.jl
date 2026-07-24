@@ -49,7 +49,7 @@ function test_linear_elasto_plasticity()
         "yield stress"      => σ_y,
         "hardening modulus" => H
     )
-    model = LinearElastoplastic(LinearIsotropicHardening())
+    model = LinearElastoplastic(VonMises(LinearIsotropicHardening()))
     test_linear_elasto_plasticity_uniaxial_stress(model, inputs)
 end
 

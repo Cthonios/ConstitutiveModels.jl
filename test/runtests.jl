@@ -5,6 +5,9 @@ using TabularFunctions
 using Tensors
 using Test
 
+struct MyBadSymmetry{O} <: CM.AbstractMaterialSymmetry{O}
+end
+
 function test_strain_eq(::UniaxialStressDisplacementControl, εs, ε_xx_ans, ε_yy_ans)
     @assert length(εs) == length(ε_xx_ans)
     @assert length(εs) == length(ε_yy_ans)
