@@ -85,7 +85,7 @@ function helmholtz_free_energy(
     return ψ_m + ψ_t + ψ_mixed
 end
 
-function p_wave_modulus(::LinearThermoelastic, props) 
+function p_wave_modulus(model::LinearThermoelastic, props)
     props = module_props(model.elastic_model, props, 2)
     return p_wave_modulus(model.elastic_model, props)
 end

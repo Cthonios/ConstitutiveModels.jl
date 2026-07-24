@@ -44,7 +44,7 @@ function spatial_tangent(
     return spatial_tangent(model.model, props, ε, θ)
 end
 
-function p_wave_modulus(::LinearElastic, props) 
+function p_wave_modulus(model::LinearElastic, props)
     props = module_props(model.model, props, 2)
     return p_wave_modulus(model.model, props)
 end
