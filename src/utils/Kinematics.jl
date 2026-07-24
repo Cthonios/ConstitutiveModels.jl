@@ -27,7 +27,7 @@ function _sort_principal_stretches(a::T, b::T, c::T) where T<:Real
     return vals, inds
 end
 
-function principal_stretchs(A::SymmetricTensor{2, 3, T, 6}) where T <: Real
+function principal_stretches(A::SymmetricTensor{2, 3, T, 6}) where T <: Real
     # invariants of A
     I1 = tr(A)
     I2 = 0.5*(I1^2 - tr(A ⋅ A))
