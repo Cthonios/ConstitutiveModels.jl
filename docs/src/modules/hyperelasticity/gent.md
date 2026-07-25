@@ -25,24 +25,23 @@ using Plots
 
 function gent_simple_shear()
     inputs = Dict(
+        "density"         => 1.0,
         "Young's modulus" => 1.0,#u"MPa",
         "Poisson's ratio" => 0.3,
         "Jm"              => 13.125
     )
 
-    model = Gent()
+    model = Hyperelastic(Gent())
+    motion = SimpleShear(t -> t)
+    out = simulate_material_point(cauchy_stress, model, inputs, motion, 1.0)
+
     props = initialize_props(model, inputs)
-    Δt = 0.0
-    θ = 0.0
-    Z_old = initialize_state(model)
-    Z_new = initialize_state(model)
+    ∇us = map(x -> x.kinematics, out)
+    γs = map(x -> x[1, 2], ∇us)
+    σs = map(x -> x.material_output, out)
+    Zs = map(x -> x.state, out)
 
-    γs = LinRange(0., 1., 101)
-    motion = SimpleShear{Float64}()
-
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs)
-
-    μ, Jm = props[2], props[3]
+    μ, Jm = props[3], props[4]
     σ_11s_an = (2. / 3.) * Jm * μ * γs.^2 ./ (Jm .- γs.^2)
     σ_22s_an = -(1. / 3.) * Jm * μ * γs.^2 ./ (Jm .- γs.^2)
     σ_12s_an = Jm * μ * γs ./ (Jm .- γs.^2)
@@ -70,24 +69,22 @@ using Plots
 
 function gent_uniaxial_strain()
     inputs = Dict(
+        "density"         => 1.0,
         "Young's modulus" => 1.0,#u"MPa",
         "Poisson's ratio" => 0.3,
         "Jm"              => 13.125
     )
 
-    model = Gent()
+    model = Hyperelastic(Gent())
+    motion = UniaxialStrain(t -> 1 + 3t)
+    out = simulate_material_point(cauchy_stress, model, inputs, motion, 1.0)
     props = initialize_props(model, inputs)
-    Δt = 0.0
-    θ = 0.0
-    Z_old = initialize_state(model)
-    Z_new = initialize_state(model)
+    ∇us = map(x -> x.kinematics, out)
+    λs = map(x -> x[1, 1] + 1, ∇us)
+    σs = map(x -> x.material_output, out)
+    Zs = map(x -> x.state, out)
 
-    λs = LinRange(1., 4., 101)
-    motion = UniaxialStrain{Float64}()
-
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
-
-    κ, μ, Jm = props[1], props[2], props[3]
+    κ, μ, Jm = props[2], props[3], props[4]
 
     σ_11s_an = 0.5 * κ .* (λs .- 1. ./ λs) -
                (2. / 3.) * Jm * μ .* (λs.^2 .- 1.) ./

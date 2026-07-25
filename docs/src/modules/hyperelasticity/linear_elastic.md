@@ -2,7 +2,7 @@
 ```@autodocs
 Modules = [ConstitutiveModels]
 Order   = [:type, :function]
-Pages   = ["LinearElastic.jl"]
+Pages   = ["LinearElasticity.jl"]
 ```
 
 ## Simple shear
@@ -17,28 +17,26 @@ using Plots
 
 function linearelastic_simple_shear()
     inputs = Dict(
+        "density"         => 1.0,
         "Young's modulus" => 1.0,#u"MPa",
         "Poisson's ratio" => 0.3
     )
 
     model = LinearElastic()
+    motion = SimpleShear(t -> 0.01t)
+    out = simulate_material_point(cauchy_stress, model, inputs, motion, 1.0)
     props = initialize_props(model, inputs)
-    Δt = 0.0
-    θ = 0.0
-    Z_old = initialize_state(model)
-    Z_new = initialize_state(model)
+    εs = map(x -> x.kinematics, out)
+    γs = map(x -> 2 * x[1, 2], εs)
+    σs = map(x -> x.material_output, out)
+    Zs = map(x -> x.state, out)
 
-    γs = LinRange(0., 0.01,101)
-    motion = SimpleShear{Float64}()
-
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs)
-
-    μ = props[2]
+    μ = props[3]
     σ_11s_an = 0. * γs
     σ_22s_an = 0. * γs
     σ_12s_an = μ * γs
 
-    plot(motion, ∇us, σs, Zs, σ_11s_an, σ_22s_an, σ_12s_an)
+    plot(motion, εs, σs, Zs, σ_11s_an, σ_22s_an, σ_12s_an)
 end
 linearelastic_simple_shear()
 ```
@@ -55,27 +53,23 @@ using Plots
 
 function linearelastic_uniaxial_strain()
     inputs = Dict(
-        "Young's modulus" => 100e3,#u"MPa",
+        "density"         => 1.0,
+        "Young's modulus" => 1.0,#u"MPa",
         "Poisson's ratio" => 0.3
     )
-
     model = LinearElastic()
+    motion = UniaxialStrain(t -> 1 + 0.05t)
+    out = simulate_material_point(cauchy_stress, model, inputs, motion, 1.0)
     props = initialize_props(model, inputs)
-    Δt = 0.0
-    θ = 0.0
-    Z_old = initialize_state(model)
-    Z_new = initialize_state(model)
+    εs = map(x -> x.kinematics, out)
+    λs = map(x -> x[1, 1] + 1, εs)
+    σs = map(x -> x.material_output, out)
+    Zs = map(x -> x.state, out)
 
-    λs = LinRange(1., 1.001, 101)
-    motion = UniaxialStrain{Float64}()
-
-    # hardcoded parameters for simple models
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
-
-    λ, μ = props[1], props[2]
+    λ, μ = props[2], props[3]
     σ_11s_an = λ * (λs .- 1.) .+ 2. * μ * (λs .- 1.)
     σ_22s_an = λ * (λs .- 1.)
-    plot(motion, ∇us, σs, Zs, σ_11s_an, σ_22s_an)
+    plot(motion, εs, σs, Zs, σ_11s_an, σ_22s_an)
 
 end
 
