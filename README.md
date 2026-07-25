@@ -5,7 +5,7 @@ ConstitutiveModels.jl aims to offer a general package for efficient implementati
 
 Example ``Hyperelastic`` model
 
-```
+```julia
 using ConstitutiveModels
 using Plots
 
