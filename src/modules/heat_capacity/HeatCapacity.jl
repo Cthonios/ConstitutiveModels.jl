@@ -9,8 +9,8 @@ end
 
 function initialize_props(::SimpleHeatCapacity, inputs::Dict{String})
     return [
-        inputs["reference temperature"],
-        inputs["specific heat capacity"]
+        get_property(inputs, "reference temperature"),
+        get_property(inputs, "specific heat capacity")
     ]
 end
 

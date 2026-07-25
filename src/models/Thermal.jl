@@ -5,9 +5,7 @@ end
 
 function initialize_props(model::Thermal, inputs::Dict{String})
     return [
-        inputs["density"],
-        # inputs["reference temperature"],
-        # inputs["specific heat capacity"],
+        get_property(inputs, "density"),
         initialize_props(model.heat_capacity_model, inputs)...,
         initialize_props(model.heat_flux_model, inputs)...
     ]

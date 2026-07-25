@@ -6,7 +6,7 @@ end
 
 function initialize_props(::Hypoelastic, inputs::Dict{String})
     el = ElasticConstants(inputs)
-    return [inputs["density"], el.λ, el.μ]
+    return [get_property(inputs, "density"), el.λ, el.μ]
 end
 
 function initialize_state(model::Hypoelastic)

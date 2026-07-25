@@ -30,10 +30,10 @@ end
 $(TYPEDSIGNATURES)
 """
 function initialize_props(::FiniteDefJ2Plasticity, inputs::Dict{String})
-    ρ   = inputs["density"]
+    ρ   = get_property(inputs, "density")
     ec  = ElasticConstants(inputs)
-    σ_y = get(inputs, "yield stress",       0.0)
-    H   = get(inputs, "hardening modulus",  0.0)
+    σ_y = get_property(inputs, "yield stress", 0.0)
+    H   = get_property(inputs, "hardening modulus", 0.0)
     return [ρ, ec.λ, ec.μ, σ_y, H]
 end
 

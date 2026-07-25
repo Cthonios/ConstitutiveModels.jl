@@ -4,6 +4,7 @@ version = "0.4.0"
 authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
 
 [deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 InverseLangevinApproximations = "b82787f2-62be-403e-9078-6d9feafd7ee3"
@@ -20,6 +21,7 @@ ConstitutiveModelsRecipesBaseExt = ["LaTeXStrings", "RecipesBase"]
 
 [compat]
 Aqua = "0.8"
+Distributions = "0.25.127"
 DocStringExtensions = "0.9"
 ForwardDiff = "1"
 InverseLangevinApproximations = "0.2"

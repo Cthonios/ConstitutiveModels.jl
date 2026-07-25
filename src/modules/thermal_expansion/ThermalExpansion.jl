@@ -10,7 +10,7 @@ function initialize_props(model::LinearThermalExpansion, inputs::Dict{String})
     # kind of hacky below for now but works
     if isa(model.symmetry, Isotropy{2})
         elastic_props = ElasticConstants(inputs)
-        α = inputs["coefficient of thermal expansion"]
+        α = get_property(inputs, "coefficient of thermal expansion")
         β = -3 * elastic_props.κ * α
         return [θ_0, β]
     else

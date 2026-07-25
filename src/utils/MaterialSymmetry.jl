@@ -28,11 +28,11 @@ function as_tensor(::Isotropy{4}, props)
 end
 
 function initialize_props(::Isotropy{2}, inputs, keys)
-    return [inputs[keys[1]]]
+    return [get_property(inputs, keys[1])]
 end
 
 function initialize_props(::Isotropy{4}, inputs, keys)
-    return [inputs[keys[1]], inputs[keys[2]]]
+    return [get_property(inputs, keys[1]), get_property(inputs, keys[2])]
 end
 
 num_properties(::Isotropy{2}) = 1

@@ -11,7 +11,7 @@ struct NoIsotropicHardening <: AbstractIsotropicHardening
 end
 
 function initialize_props(::NoIsotropicHardening, inputs::Dict{String})
-    return [inputs["yield stress"]]
+    return [get_property(inputs, "yield stress")]
 end
 
 num_properties(::NoIsotropicHardening) = 1
@@ -25,8 +25,8 @@ end
 
 function initialize_props(::LinearIsotropicHardening, inputs::Dict{String})
     return [
-        inputs["yield stress"],
-        inputs["hardening modulus"]
+        get_property(inputs, "yield stress"),
+        get_property(inputs, "hardening modulus")
     ]
 end
 
@@ -41,10 +41,10 @@ end
 
 function initialize_props(::PowerLawIsotropicHardening, inputs::Dict{String})
     return [
-        inputs["yield stress"],         # σ_y
-        inputs["hardening coefficient"],# K
-        inputs["hardening exponent"],   # n
-        inputs["luders strain"]         # ε_L
+        get_property(inputs, "yield stress"),         # σ_y
+        get_property(inputs, "hardening coefficient"),# K
+        get_property(inputs, "hardening exponent"),   # n
+        get_property(inputs, "luders strain")         # ε_L
     ]
 end
 
@@ -97,10 +97,10 @@ end
 
 function initialize_props(::Voce, inputs::Dict{String})
     return [
-        inputs["yield stress"],
-        inputs["hardening modulus"],
-        inputs["saturation stress"],
-        inputs["hardening exponent"]
+        get_property(inputs, "yield stress"),
+        get_property(inputs, "hardening modulus"),
+        get_property(inputs, "saturation stress"),
+        get_property(inputs, "hardening exponent")
     ]
 end
 
