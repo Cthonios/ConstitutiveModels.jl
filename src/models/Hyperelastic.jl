@@ -5,7 +5,7 @@ struct Hyperelastic{
 end
 
 function initialize_props(model::Hyperelastic, inputs::Dict{String})
-    return [inputs["density"], initialize_props(model.model, inputs)...]
+    return [get_property(inputs, "density"), initialize_props(model.model, inputs)...]
 end
 
 num_properties(model::Hyperelastic) = 1 + num_properties(model.model)

@@ -37,7 +37,7 @@ function initialize_props(::LinearThermoelastic, inputs::Dict{String})
     #     β, θ_0, c, k
     # ]
     return [
-        inputs["density"],
+        get_property(inputs, "density"),
         initialize_props(model.heat_capacity_model, inputs)...,
         initialize_props(model.heat_flux_model, inputs)...,
         initialize_props(model.thermal_expansion, inputs)...,

@@ -9,8 +9,8 @@ $(TYPEDSIGNATURES)
 """
 function initialize_props(::MooneyRivlin, inputs::Dict{String})
     ec = ElasticConstants(inputs)
-    C1 = get(inputs, "C1", ec.μ / 2)  # default split of μ
-    C2 = get(inputs, "C2", ec.μ / 2)
+    C1 = get_property(inputs, "C1", ec.μ / 2)  # default split of μ
+    C2 = get_property(inputs, "C2", ec.μ / 2)
     return [ec.κ, C1, C2]
 end
 

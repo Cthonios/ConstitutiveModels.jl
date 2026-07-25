@@ -71,6 +71,12 @@ end
     @testset "Material symmetry" begin
         include("utils/TestMaterialSymmetry.jl")
     end
+    @testset "Properties" begin
+        include("utils/TestProperties.jl")
+    end
+    @testset "State variables" begin
+        include("utils/TestStateVariables.jl")
+    end
     @testset "Additional tensor math" begin
         include("utils/TestMath.jl")
     end

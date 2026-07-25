@@ -12,7 +12,7 @@ end
 
 function initialize_props(model::LinearElastoplastic, inputs::Dict{String})
     return [
-        inputs["density"],
+        get_property(inputs, "density"),
         initialize_props(model.elastic_model, inputs)...,
         initialize_props(model.yield_surface, inputs)...
     ]
