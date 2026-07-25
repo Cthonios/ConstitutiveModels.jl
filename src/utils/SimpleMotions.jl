@@ -475,7 +475,7 @@ function displacement_gradient(
     model, props, Z_old, Z_new, Δt, θ
 ) where {DGT, VGT, T <: Number}
     function objective(x, t, model, props, Z_old, Z_new, Δt, θ)
-        ∇u = Tensor{2, 3, DGT, 9}((
+        ∇u = Tensor{2, 3, eltype(x), 9}((
             m.λ(t) - 1, 0,    0, 
             0,          x[1], 0, 
             0,          0,    x[1]

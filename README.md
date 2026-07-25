@@ -3,46 +3,31 @@
 
 ConstitutiveModels.jl aims to offer a general package for efficient implementation of general constitutive models with state.
 
-Example LinearElastoPlasticity model
+Example ``Hyperelastic`` model
 
 ```
 using ConstitutiveModels
 using Plots
-using Tensors
 
-function run_loop!(Fs, σs, motion, model, props, state, λs)
-  for λ in λs
-    @show λ
-    F = deformation_gradient(motion, model, props, state, λ)
-    # P = pk1_stress(model, props, F)
-    σ, state = cauchy_stress(model, props, F, state)
-    push!(Fs, F)
-    push!(σs, σ)
-  end
-end
-
+model = Hyperelastic(NeoHookean())
 props = Dict(
-  "youngs modulus"            => 70e9,
-  "poissons ratio"            => 0.3,
-  "yield stress"              => 200.0e6,
-  "isotropic hardening model" => "VoceIsotropicHardening",
-  "A"                         => 200.0e6,
-  "n"                         => 20
-
+  "density"         => 1.0e3,
+  "Young's modulus" => 1.0e6,
+  "Poisson's ratio" => 0.4995
 )
-model, props, state = LinearElastoPlasticity(props)
+λ_func = t -> 1 + 3t
+motion = UniaxialStrain(λ_func)
 
-motion = UniaxialStressDisplacementControl
-λs = LinRange(1.0, 1.1, 100)
+out = simulate_material_point(cauchy_stress, model, props, motion, 1.0)
 
-Fs = Tensor{2, 3, Float64, 9}[]
-σs = Tensor{2, 3, Float64, 9}[]
+t = map(x -> x.time, out)
+ε = map(x -> linear_strain(motion, x)[1, 1], t)
+σ = map(x -> x.material_output[1, 1], out)
 
-run_loop!(Fs, σs, motion, model, props, state, λs)
+λ = ε .+ 1
 
-F_11s = map(x -> x[1, 1], Fs)
-σ_11s = map(x -> x[1, 1], σs)
+p = plot(λ, σ)
+savefig(p, "stress_strain.png")
 
-p = plot(F_11s, σ_11s)
 
 ```

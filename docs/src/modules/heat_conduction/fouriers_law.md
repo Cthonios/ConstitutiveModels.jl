@@ -1,5 +1,6 @@
+# Fourier's law
 ```@autodocs
 Modules = [ConstitutiveModels]
 Order   = [:type, :function]
-Pages   = ["CommonMethods.jl"]
+Pages   = ["FouriersLaw.jl"]
 ```

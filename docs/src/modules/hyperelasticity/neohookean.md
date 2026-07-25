@@ -25,23 +25,23 @@ using Plots
 
 function neohookean_pure_shear_strain()
     inputs = Dict(
+        "density"         => 1.0,
         "Young's modulus" => 1.0,#u"MPa",
         "Poisson's ratio" => 0.3
     )
 
-    model = NeoHookean()
+    model = Hyperelastic(NeoHookean())
+    motion = PureShearStrain(t -> 1 + 1.25t)
+    out = simulate_material_point(cauchy_stress, model, inputs, motion, 1.0)
+
     props = initialize_props(model, inputs)
-    Δt = 0.0
-    θ = 0.0
-    Z_old = initialize_state(model)
-    Z_new = initialize_state(model)
+    ts = map(x -> x.time, out)
+    ∇us = map(x -> x.kinematics, out)
+    λs = map(t -> 1 + 1.25t, ts)
+    σs = map(x -> x.material_output, out)
+    Zs = map(x -> x.state, out)
 
-    λs = LinRange(1., 1.25, 101)
-    motion = PureShearStrain{Float64}()
-
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
-
-    μ = props[2]
+    μ = props[3]
     σ_11s_an = (μ / 3) * (0.5 * (λs.^2 .+ λs.^(-2)) .- 1)
     σ_33s_an = (μ / 3) * (2 .- λs.^2 .- λs.^(-2))
     σ_12s_an = (μ / 2) * (λs.^2 .- λs.^(-2))
@@ -71,23 +71,22 @@ using Plots
 
 function neohookean_simple_shear()
     inputs = Dict(
+        "density"         => 1.0,
         "Young's modulus" => 1.0,#u"MPa",
         "Poisson's ratio" => 0.3
     )
 
-    model = NeoHookean()
+    model = Hyperelastic(NeoHookean())
+    motion = SimpleShear(t -> t)
+    out = simulate_material_point(cauchy_stress, model, inputs, motion, 1.0)
+
     props = initialize_props(model, inputs)
-    Δt = 0.0
-    θ = 0.0
-    Z_old = initialize_state(model)
-    Z_new = initialize_state(model)
+    ∇us = map(x -> x.kinematics, out)
+    γs = map(x -> x[1, 2], ∇us)
+    σs = map(x -> x.material_output, out)
+    Zs = map(x -> x.state, out)
 
-    γs = LinRange(0., 1., 101)
-    motion = SimpleShear{Float64}()
-
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, γs)
-
-    μ = props[2]
+    μ = props[3]
     σ_11s_an = (2. / 3.) * μ * γs.^2
     σ_22s_an = -(1. / 3.) * μ * γs.^2
     σ_12s_an = μ * γs
@@ -115,23 +114,22 @@ using Plots
 
 function neohookean_uniaxial_strain()
     inputs = Dict(
+        "density"         => 1.0,
         "Young's modulus" => 1.0,#u"MPa",
         "Poisson's ratio" => 0.3
     )
 
-    model = NeoHookean()
+    model = Hyperelastic(NeoHookean())
+    motion = UniaxialStrain(t -> 1 + 3t)
+    out = simulate_material_point(cauchy_stress, model, inputs, motion, 1.0)
+
     props = initialize_props(model, inputs)
-    Δt = 0.0
-    θ = 0.0
-    Z_old = initialize_state(model)
-    Z_new = initialize_state(model)
+    ∇us = map(x -> x.kinematics, out)
+    λs = map(x -> x[1, 1] + 1, ∇us)
+    σs = map(x -> x.material_output, out)
+    Zs = map(x -> x.state, out)
 
-    λs = LinRange(1., 4., 101)
-    motion = UniaxialStrain{Float64}()
-
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
-
-    κ, μ = props[1], props[2]
+    κ, μ = props[2], props[3]
 
     σ_11s_an = 0.5 * κ * (λs .- 1 ./ λs) + 
                (2. / 3.) * μ * (λs.^2 .- 1.) .* λs .^ (-5. / 3.) 
@@ -161,23 +159,22 @@ using Plots
 
 function neohookean_uniaxial_stress()
     inputs = Dict(
+        "density"         => 1.0,
         "Young's modulus" => 1.0,#u"MPa",
         "Poisson's ratio" => 0.3
     )
 
-    model = NeoHookean()
+    model = Hyperelastic(NeoHookean())
+    motion = UniaxialStressDisplacementControl(t -> 1 + 3t)
+    out = simulate_material_point(cauchy_stress, model, inputs, motion, 1.0)
+
     props = initialize_props(model, inputs)
-    Δt = 0.0
-    θ = 0.0
-    Z_old = initialize_state(model)
-    Z_new = initialize_state(model)
+    ∇us = map(x -> x.kinematics, out)
+    λs = map(x -> x[1, 1] + 1, ∇us)
+    σs = map(x -> x.material_output, out)
+    Zs = map(x -> x.state, out)
 
-    λs = LinRange(1., 4., 101)
-    motion = UniaxialStressDisplacementControl{Float64}()
-
-    ∇us, σs, Zs = simulate_material_point(cauchy_stress, model, props, Δt, θ, Z_old, Z_new, motion, λs)
-
-    κ, μ = props[1], props[2]
+    κ, μ = props[2], props[3]
 
     σ_11s_an = 0.5 * κ * (λs .- 1 ./ λs) + 
                (2. / 3.) * μ * (λs.^2 .- 1.) .* λs .^ (-5. / 3.) 
