@@ -53,4 +53,17 @@ function test_linear_elasto_plasticity()
     test_linear_elasto_plasticity_uniaxial_stress(model, inputs)
 end
 
+function test_linear_elasto_plasticity_state_variable_names()
+    # state_variable_names(::LinearElastoplastic) referenced an undefined
+    # type parameter T and passed a tensor *type* to a helper dispatched on
+    # tensor *instances*, so asking a linear elastoplastic model for its
+    # state names threw UndefVarError.  The names must line up one to one
+    # with pack_state!: Z[1:6] = ε_p, Z[7] = eqps.
+    model = LinearElastoplastic(VonMises(LinearIsotropicHardening()))
+    names = state_variable_names(model)
+    @test names == ["ep_xx", "ep_xy", "ep_xz", "ep_yy", "ep_yz", "ep_zz", "eqps"]
+    @test length(names) == num_state_variables(model)
+end
+
 test_linear_elasto_plasticity()
+test_linear_elasto_plasticity_state_variable_names()
