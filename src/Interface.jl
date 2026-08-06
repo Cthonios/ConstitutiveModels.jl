@@ -13,10 +13,23 @@ function initialize_props end
 function initialize_state end
 function num_properties end
 function num_state_variables end
-function property_names end # optional maybe?
+"""
+defines the property names that will be read in by the default
+``initialize_props`` method.
+"""
+function property_names end
 function state_variable_names end
 
 # defaults
+"""
+Default props constructor to just use property_names
+with no defaults. Supports sampling.
+"""
+function initialize_props(c::AbstractConstitutive, inputs::Dict{String})
+    prop_names = property_names(c)
+    return map(x -> get_property(inputs, x), prop_names)
+end
+
 """
 Default state constructor to just return zeros
 """
@@ -25,6 +38,9 @@ function initialize_state(c::AbstractConstitutive)
 end
 num_properties(model::AbstractConstitutive) = throw(UnImplementedMethodError("Need to implement num_properties method $(typeof(model))."))
 num_state_variables(model::AbstractConstitutive) = throw(UnImplementedMethodError("Need to implement num_state_variables method for $(typeof(model))"))
+function property_names(c::AbstractConstitutive)
+    throw(UnImplementedMethodError("property_names method needs to be implemented for $(typeof(c))"))
+end
 """
 Return human-readable names for each state variable, in storage order.
 Default fallback generates generic names: ["state_1", "state_2", ...].

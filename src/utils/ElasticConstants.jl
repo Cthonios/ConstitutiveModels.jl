@@ -132,3 +132,14 @@ function Base.show(io::IO, e::ElasticConstants)
     println(io, "  shear modulus         = $(e.μ)")
     println(io, "  Young's Modulus       = $(e.E)")
 end
+
+function to_dict(e::ElasticConstants{T}) where T <: Number
+    d = Dict{String, T}(
+        "bulk modulus"          => e.κ,
+        "Lamé's first constant" => e.λ,
+        "Poisson's ratio"       => e.ν,
+        "shear modulus"         => e.μ,
+        "Young's modulus"       => e.E
+    )
+    return d
+end

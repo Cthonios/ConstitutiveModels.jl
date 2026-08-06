@@ -48,6 +48,13 @@ end
 num_properties(::FiniteDefJ2Plasticity) = 5
 num_state_variables(::FiniteDefJ2Plasticity) = 10
 
+function property_names(::FiniteDefJ2Plasticity)
+    return [
+        "density", "Lamé's first constant", "shear modulus",
+        "yield stress", "hardening modulus"
+    ]
+end
+
 function state_variable_names(::FiniteDefJ2Plasticity)
     return [
         "Fp_xx", "Fp_yx", "Fp_zx",

@@ -13,6 +13,10 @@ end
 num_properties(model::LinearElastic) = num_properties(model.model) + 1
 num_state_variables(model::LinearElastic) = 0
 
+function property_names(model::LinearElastic)
+    return ["density", property_names(model.model)...]
+end
+
 function cauchy_stress(
     model::LinearElastic,
     props, Z_old, Z_new, Δt, ε, θ

@@ -16,6 +16,10 @@ end
 
 num_properties(::MooneyRivlin) = 3
 
+function property_names(::MooneyRivlin)
+    return ["bulk modulus", "C1", "C2"]
+end
+
 """
 ``\\psi = \\frac{1}{2}\\left[\\frac{1}{2}\\left(J^2 - 1\\right) - \\ln J\\right]
         + C_1\\left(\\bar{I}_1 - 3\\right)

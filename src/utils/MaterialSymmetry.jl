@@ -37,3 +37,11 @@ end
 
 num_properties(::Isotropy{2}) = 1
 num_properties(::Isotropy{4}) = 2
+
+function property_names(::Isotropy{2}, keys)
+    return [keys[1]]
+end
+
+function property_names(::Isotropy{4}, keys)
+    return [keys[1], keys[2]]
+end

@@ -15,6 +15,10 @@ end
 
 num_properties(::Gent) = 3
 
+function property_names(::Gent)
+    return ["bulk modulus", "shear modulus", "Jm"]
+end
+
 """
 ``\\psi = \\frac{1}{2}\\left[\\frac{1}{2}\\left(J^2 - 1\\right) - \\ln J\\right]
         - \\frac{1}{2}\\mu J_m\\ln\\left(1 - \\frac{\\bar{I}_1 - 3}{Jm}\\right)``

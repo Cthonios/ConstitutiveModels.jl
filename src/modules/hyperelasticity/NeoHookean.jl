@@ -15,6 +15,10 @@ end
 
 num_properties(::NeoHookean) = 2
 
+function property_names(::NeoHookean)
+    return ["bulk modulus", "shear modulus"]
+end
+
 """
 ``\\psi = \\frac{1}{2}\\left[\\frac{1}{2}\\left(J^2 - 1\\right) - \\ln J\\right]
         + \\frac{1}{2}\\mu\\left(\\bar{I}_1 - 3\\right)``

@@ -14,6 +14,14 @@ end
 num_properties(model::Thermal) = num_properties(model.heat_capacity_model) + num_properties(model.heat_flux_model) + 1
 num_state_variables(model::Thermal) = 0
 
+function property_names(model::Thermal)
+    return [
+        "density",
+        property_names(model.heat_capacity_model)...,
+        property_names(model.heat_flux_model)...
+    ]
+end
+
 function dissipation(
     model::Thermal,
     props, Z_old, Z_new, Δt, ∇u, θ, ∇θ

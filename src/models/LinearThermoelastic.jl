@@ -45,10 +45,22 @@ function initialize_props(::LinearThermoelastic, inputs::Dict{String})
     ]
 end
 
-num_properties(::LinearThermoelastic) = 1 + num_properties(model.elastic_model) +
-    num_properties(model.heat_capacity_model) + num_properties(model.heat_flux_model) +
+num_properties(::LinearThermoelastic) = 1 +
+    num_properties(model.elastic_model) +
+    num_properties(model.heat_capacity_model) +
+    num_properties(model.heat_flux_model) +
     num_prony_terms(model.thermal_expansion_model)
 num_state_variables(::LinearThermoelastic) = 0
+
+function property_names(c::LinearThermoelastic)
+    return [
+        "density",
+        property_names(c.heat_capacity_model)...,
+        property_names(c.heat_flux_model)...,
+        property_names(c.thermal_expansion)...,
+        property_names(c.elastic_model)...
+    ]
+end
 
 function dissipation(
     ::LinearThermoelastic,

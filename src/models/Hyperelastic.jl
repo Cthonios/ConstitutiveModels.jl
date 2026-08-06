@@ -11,6 +11,10 @@ end
 num_properties(model::Hyperelastic) = 1 + num_properties(model.model)
 num_state_variables(model::Hyperelastic) = 0
 
+function property_names(model::Hyperelastic)
+    return ["density", property_names(model.model)...]
+end
+
 function cauchy_stress(
     model::Hyperelastic,
     props, Z_old, Z_new, Δt, ∇u, θ

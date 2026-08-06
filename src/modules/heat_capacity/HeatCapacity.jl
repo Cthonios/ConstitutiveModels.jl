@@ -7,15 +7,12 @@ function helmholtz_free_energy end
 struct SimpleHeatCapacity <: AbstractHeatCapacity
 end
 
-function initialize_props(::SimpleHeatCapacity, inputs::Dict{String})
-    return [
-        get_property(inputs, "reference temperature"),
-        get_property(inputs, "specific heat capacity")
-    ]
-end
-
 num_properties(::SimpleHeatCapacity) = 2
 num_state_variables(::SimpleHeatCapacity) = 0
+
+function property_names(::SimpleHeatCapacity)
+    return ["reference temperature", "specific heat capacity"]
+end
 
 function disspation(::SimpleHeatCapacity, props, ∇u, θ)
     return zero(typeof(θ))
