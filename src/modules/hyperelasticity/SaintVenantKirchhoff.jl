@@ -31,6 +31,10 @@ end
 
 num_properties(::SaintVenantKirchhoff) = 2
 
+function property_names(::SaintVenantKirchhoff)
+    return ["Lamé's first constant", "shear modulus"]
+end
+
 """
 $(TYPEDSIGNATURES)
 """

@@ -18,6 +18,10 @@ end
 num_properties(::Hypoelastic) = 3
 num_state_variables(::Hypoelastic) = 7
 
+function property_names(::Hypoelastic)
+    return ["density", "Lamé's first constant", "shear modulus"]
+end
+
 function pack_state!(Z, ::Hypoelastic, σ, J)
     Z[1:6] .= σ.data
     Z[7] = J

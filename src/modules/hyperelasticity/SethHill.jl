@@ -32,6 +32,10 @@ end
 
 num_properties(::SethHill) = 4
 
+function property_names(::SethHill)
+    return ["bulk modulus", "shear modulus", "m", "n"]
+end
+
 """
 $(TYPEDSIGNATURES)
 """

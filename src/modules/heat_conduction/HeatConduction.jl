@@ -41,18 +41,15 @@ struct FouriersLaw{S <: AbstractMaterialSymmetry{2}} <: AbstractHeatConduction
     end
 end
 
-"""
-$(TYPEDSIGNATURES)
-"""
-function initialize_props(model::FouriersLaw, inputs::Dict{String})
+num_properties(model::FouriersLaw) = num_properties(model.symmetry)
+
+function property_names(model::FouriersLaw)
     if isa(model.symmetry, Isotropy{2})
-        return [initialize_props(model.symmetry, inputs, ["thermal conductivity"])...]
+        return property_names(model.symmetry, ["thermal conductivity"])
     else
         @assert false "Currently unsupported material symmetry type $(model.symmetry)"
     end
 end
-
-num_properties(model::FouriersLaw) = num_properties(model.symmetry)
 
 # TODO check against Gurtin-Fried-Anand
 function dissipation(model::FouriersLaw, props, kin, θ, ∇θ)

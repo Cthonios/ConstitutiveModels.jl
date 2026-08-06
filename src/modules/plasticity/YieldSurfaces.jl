@@ -12,12 +12,6 @@ struct VonMises{I} <: AbstractYieldSurface{I}
     isotropic_hardening_model::I
 end
 
-function initialize_props(model::VonMises, inputs::Dict{String})
-    return [
-        initialize_props(model.isotropic_hardening_model, inputs)...
-    ]
-end
-
 function initialize_state(model::VonMises)
     return [
         zero(SymmetricTensor{2, 3, Float64, 6}).data...,
@@ -26,6 +20,7 @@ function initialize_state(model::VonMises)
 end
 
 num_properties(model::VonMises) = num_properties(model.isotropic_hardening_model)
+property_names(model::VonMises) = property_names(model.isotropic_hardening_model)
 num_state_variables(model::VonMises) = num_state_variables(model.isotropic_hardening_model)
 
 function effective_stress(::VonMises, props, σ)

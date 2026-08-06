@@ -20,6 +20,14 @@ end
 
 num_properties(model::LinearThermalExpansion) = 1 + num_properties(model.symmetry)
 
+function property_names(model::LinearThermalExpansion)
+    if isa(model.symmetry, Isotropy{2})
+        prop_names = ["reference temperature", "β"]
+    else
+        @assert false "Currently unsupported material symmetry type $(model.symmetry)"
+    end
+end
+
 function cauchy_stress(model::LinearThermalExpansion, props, ::SymmetricTensor{2, 3, T, 6}, θ) where T <: Number
     θ_0 = props[1]
     M_props = module_props(model.symmetry, props, 2)

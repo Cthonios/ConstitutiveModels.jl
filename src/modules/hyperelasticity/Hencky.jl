@@ -14,6 +14,10 @@ end
 
 num_properties(::Hencky) = 2
 
+function property_names(::Hencky)
+    return ["bulk modulus", "shear modulus"]
+end
+
 """
 ``
 \\psi = \\frac{1}{2}\\kappa tr\\left(\\mathbf{E}\\right)^2 +

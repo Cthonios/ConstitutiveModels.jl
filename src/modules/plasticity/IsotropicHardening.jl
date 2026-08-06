@@ -10,11 +10,8 @@ function hardening_hessian end
 struct NoIsotropicHardening <: AbstractIsotropicHardening
 end
 
-function initialize_props(::NoIsotropicHardening, inputs::Dict{String})
-    return [get_property(inputs, "yield stress")]
-end
-
 num_properties(::NoIsotropicHardening) = 1
+property_names(::NoIsotropicHardening) = ["yield stress"]
 
 hardening_energy(::NoIsotropicHardening, props, eqps) = props[1] * eqps
 hardening_gradient(::NoIsotropicHardening, props, eqps) = props[1]
@@ -23,14 +20,8 @@ hardening_hessian(::NoIsotropicHardening, props, eqps) = zero(typeof(eqps))
 struct LinearIsotropicHardening <: AbstractIsotropicHardening
 end
 
-function initialize_props(::LinearIsotropicHardening, inputs::Dict{String})
-    return [
-        get_property(inputs, "yield stress"),
-        get_property(inputs, "hardening modulus")
-    ]
-end
-
 num_properties(::LinearIsotropicHardening) = 2
+property_names(::LinearIsotropicHardening) = ["yield stress", "hardening modulus"]
 
 hardening_energy(::LinearIsotropicHardening, props, eqps) = props[1] * eqps + 0.5 * props[2] * eqps * eqps
 hardening_gradient(::LinearIsotropicHardening, props, eqps) = props[1] + props[2] * eqps
@@ -39,16 +30,11 @@ hardening_hessian(::LinearIsotropicHardening, props, eqps) = props[2]
 struct PowerLawIsotropicHardening <: AbstractIsotropicHardening
 end
 
-function initialize_props(::PowerLawIsotropicHardening, inputs::Dict{String})
-    return [
-        get_property(inputs, "yield stress"),         # σ_y
-        get_property(inputs, "hardening coefficient"),# K
-        get_property(inputs, "hardening exponent"),   # n
-        get_property(inputs, "luders strain")         # ε_L
-    ]
-end
-
 num_properties(::PowerLawIsotropicHardening) = 4
+property_names(::PowerLawIsotropicHardening) = [
+    "yield stress", "hardening coefficient",
+    "hardening exponent", "luders strain"
+]
 
 function hardening_energy(::PowerLawIsotropicHardening, props, eqps)
     σy = props[1]
@@ -95,16 +81,11 @@ end
 struct Voce <: AbstractIsotropicHardening
 end
 
-function initialize_props(::Voce, inputs::Dict{String})
-    return [
-        get_property(inputs, "yield stress"),
-        get_property(inputs, "hardening modulus"),
-        get_property(inputs, "saturation stress"),
-        get_property(inputs, "hardening exponent")
-    ]
-end
-
 num_properties(::Voce) = 4
+property_names(::Voce) = [
+    "yield stress", "hardening modulus",
+    "saturation stress", "hardening exponent"
+]
 
 # hardening_energy(::Voce, props, eqps) = props[1] * eqps + 0.5 * props[2] * eqps * eqps + props[3] * eqps - 
 # hardening_gradient(::Voce, props, eqps) = props[1] + props[2] * eqps

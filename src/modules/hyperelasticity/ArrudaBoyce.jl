@@ -9,6 +9,10 @@ end
 
 num_properties(::ArrudaBoyce) = 3
 
+function property_names(::ArrudaBoyce)
+    return ["bulk modulus", "shear modulus", "n"]
+end
+
 # using treloar approximation
 # function _inverse_langevin_approx(y)
 #     return 3 * y / (1 - (3 / 5 * y^2 + 36 / 175 * y^4 + 108 / 875 * y^6))

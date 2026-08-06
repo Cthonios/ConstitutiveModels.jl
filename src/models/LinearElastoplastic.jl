@@ -21,6 +21,14 @@ end
 num_properties(model::LinearElastoplastic) = num_properties(model.elastic_model) + num_properties(model.yield_surface) + 1
 num_state_variables(model::LinearElastoplastic) = 6 + num_state_variables(model.yield_surface)
 
+function property_names(::LinearElastoplastic)
+    return [
+        "density",
+        property_names(model.elastic_model)...,
+        property_names(model.yield_surface)...
+    ]
+end
+
 function pack_state!(Z, model::LinearElastoplastic, ε_p, eqps, σ_b)
     # @show ε_p
     Z[1:6] .= ForwardDiff.value.(ε_p.data)

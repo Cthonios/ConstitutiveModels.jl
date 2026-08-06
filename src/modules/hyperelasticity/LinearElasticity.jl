@@ -14,6 +14,10 @@ end
 
 num_properties(::LinearElasticity) = 2
 
+function property_names(::LinearElasticity)
+    return ["Lamé's first constant", "shear modulus"]
+end
+
 """
 ``\\psi = \\frac{1}{2}\\lambda tr\\left(\\varepsilon\\right)^2
         + \\mu \\varepsilon:\\varepsilon``
