@@ -476,6 +476,45 @@ function test_neohookean_uniaxial_strain(model, inputs)
     _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, zeros(0), zeros(0), 0.0, ∇us, 0.0)
 end
 
+# `pk1_stress` must evaluate in whatever precision it is handed, not silently
+# promote to Float64.  A single Float64 literal in the body (`0.5`, `1. / 3.`)
+# is enough to promote the whole expression, and the result stays *correct* --
+# it just costs full FP64 throughput, with no error and no failing test to show
+# for it.  Reduced-precision callers rely on this: Carina drives its AMG
+# smoother's matrix-free action in Float32, where FP64 runs at 1/32 rate on
+# consumer GPUs, so a promotion here silently erases the entire speedup.
+function test_neohookean_precision_is_preserved(model, inputs)
+    props64 = Vector{Float64}(initialize_props(model, inputs))
+    ∇u64 = Tensor{2, 3, Float64, 9}(ntuple(i -> 1.0e-3 * i, Val(9)))
+
+    for T in (Float32, Float64)
+        props = Vector{T}(props64)
+        ∇u    = Tensor{2, 3, T, 9}(ntuple(i -> T(∇u64.data[i]), Val(9)))
+        P = pk1_stress(model, props, zeros(0), zeros(0), zero(T), ∇u, zero(T))
+        @test eltype(P) === T
+    end
+
+    # Float32 must also agree with Float64 to Float32 accuracy -- a type-stable
+    # result computed from the wrong constants would pass the check above.
+    #
+    # Compared against the stress scale rather than componentwise: the small
+    # off-diagonal entries carry meaningless relative error.  The tolerance is
+    # set from the measured discrepancy (1.3e-5 of scale at this strain, worst
+    # on the diagonal) with roughly a decade of headroom, not from eps(Float32).
+    # The loss is cancellation, not rounding: the volumetric term forms J² − 1
+    # with J ≈ 1.015, and the deviatoric term forms F − (I₁/3)F⁻ᵀ, both
+    # differences of O(1) quantities yielding an O(1e-3) result.  That is the
+    # same cancellation that makes Float32 unsuitable as a primary precision
+    # near incompressibility, and the reason the reduced-precision action is
+    # confined to preconditioning.
+    P64 = pk1_stress(model, props64, zeros(0), zeros(0), 0.0, ∇u64, 0.0)
+    P32 = pk1_stress(model, Vector{Float32}(props64), zeros(0), zeros(0), 0.0f0,
+                     Tensor{2, 3, Float32, 9}(ntuple(i -> Float32(∇u64.data[i]), Val(9))),
+                     0.0f0)
+    @test maximum(abs, Float64.(P32.data) .- P64.data) <=
+          1e-4 * maximum(abs, P64.data)
+end
+
 function test_neohookean()
     inputs = Dict(
         "density"         => 1.0,
@@ -486,6 +525,7 @@ function test_neohookean()
     test_neohookean_pure_shear_strain(model, inputs)
     test_neohookean_simple_shear(model, inputs)
     test_neohookean_uniaxial_strain(model, inputs)
+    test_neohookean_precision_is_preserved(model, inputs)
 end
 
 #########################################################
