@@ -46,16 +46,23 @@ end
 """
 $(TYPEDSIGNATURES)
 """
+# The literals here are written `one(J)/2` rather than `0.5` deliberately.  A
+# Float64 literal promotes the whole expression, so calling this with Float32
+# properties and a Float32 `∇u` used to return a Float64 stress -- silently, at
+# full FP64 cost.  That defeats any reduced-precision caller (Carina drives the
+# AMG smoother's matrix-free action in Float32, where FP64 runs at 1/32 rate on
+# consumer GPUs) with no error to show for it.  Keep every constant tied to the
+# working type so the precision the caller asks for is the precision it gets.
 function pk1_stress(::NeoHookean, props, ∇u, θ)
     κ, μ    = props[1], props[2]
     F       = ∇u + one(∇u)
     J       = det(F)
-    J_m_13  = 1. / cbrt(J)
+    J_m_13  = one(J) / cbrt(J)
     J_m_23  = J_m_13 * J_m_13
     I_1     = tr(tdot(F))
     F_inv_T = inv(F)'
-    P       = 0.5 * κ * (J * J - 1.) * F_inv_T +
-              μ * J_m_23 * (F - (1. / 3.) * I_1 * F_inv_T)
+    P       = (one(J) / 2) * κ * (J * J - one(J)) * F_inv_T +
+              μ * J_m_23 * (F - (one(J) / 3) * I_1 * F_inv_T)
     return P
 end
 
