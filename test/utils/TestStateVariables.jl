@@ -1,5 +1,5 @@
 function test_state_variables()
-    a = zero(SymmetricTensor{2, 3, Float64, 6})
+    a = SymmetricTensor{2, 3, Float64, 6}
     names = state_variable_names(a, "some_long_var_name")
     @test names[1] == "some_long_var_name_xx"
     @test names[2] == "some_long_var_name_xy"
@@ -8,7 +8,7 @@ function test_state_variables()
     @test names[5] == "some_long_var_name_yz"
     @test names[6] == "some_long_var_name_zz"
 
-    a = zero(Tensor{2, 3, Float64, 9})
+    a = Tensor{2, 3, Float64, 9}
     names = state_variable_names(a, "some_other_long_var_name")
     @test names[1] == "some_other_long_var_name_xx"
     @test names[2] == "some_other_long_var_name_yx"

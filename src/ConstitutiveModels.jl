@@ -21,6 +21,7 @@ export as_tensor,
        pk1_stress,
        pk2_stress,
        pow,
+       property_names,
        p_wave_modulus,
        simulate_material_point,
        spatial_tangent,
@@ -58,6 +59,7 @@ export LinearThermalExpansion
 export VonMises
 
 # actual models
+export FeFv
 export FiniteDefJ2Plasticity
 export Hyperelastic
 export Hypoelastic
@@ -95,6 +97,7 @@ include("modules/plasticity/Plasticity.jl")
 include("modules/thermal_expansion/ThermalExpansion.jl")
 
 # models
+include("models/FeFv.jl")
 include("models/FiniteDefJ2Plasticity.jl")
 include("models/Hyperelastic.jl")
 include("models/Hypoelastic.jl")

@@ -41,7 +41,7 @@ end
 
 function state_variable_names(::LinearElastoplastic)
     return [
-        state_variable_names(zero(SymmetricTensor{2, 3, Float64, 6}), "ep")...,
+        state_variable_names(SymmetricTensor{2, 3, Float64, 6}, "ep")...,
         "eqps"
     ]
 end
