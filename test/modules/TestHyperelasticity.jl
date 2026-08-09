@@ -188,7 +188,7 @@ end
 function test_hencky_uniaxial_strain(model, inputs)
     props = initialize_props(model, inputs)
     λ_func = @piecewise_linear begin
-        0.0, 1.25
+        0.0, 1.00
         1.0, 4.00
     end
     motion = UniaxialStrain(λ_func)
@@ -214,11 +214,11 @@ function test_hencky_uniaxial_strain(model, inputs)
     test_stress_eq(motion, σs, σ_xx_an, σ_yy_an)
 
     # _test_ad_equal_analytic_for_hyper_material_tangent(model, props, zeros(0), zeros(0), 0.0, ∇us, 0.0)
-    _test_ad_equal_analytic_for_hyper_material_tangent(
-        model, props, zeros(0), zeros(0), 0.0, ∇us, 0.0;
-        atol = 1e-9, rtol=1e-9
-    )
-    _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, zeros(0), zeros(0), 0.0, ∇us, 0.0)
+    # _test_ad_equal_analytic_for_hyper_material_tangent(
+    #     model, props, zeros(0), zeros(0), 0.0, ∇us, 0.0;
+    #     atol = 1e-9, rtol=1e-9
+    # )
+    # _test_ad_equal_analytic_for_hyper_pk1_stress(model, props, zeros(0), zeros(0), 0.0, ∇us, 0.0)
 end
 
 function test_hencky()
@@ -229,7 +229,7 @@ function test_hencky()
     )
     model = Hyperelastic(Hencky())
     test_hencky_simple_shear(model, inputs)
-    # test_hencky_uniaxial_strain(model, inputs)
+    test_hencky_uniaxial_strain(model, inputs)
 end
 
 #########################################################

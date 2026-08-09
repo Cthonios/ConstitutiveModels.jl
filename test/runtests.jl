@@ -99,6 +99,7 @@ end
 end
 
 @testset "Models" begin
+    include("models/TestFeFv.jl")
     include("models/TestFiniteDefJ2Plasticity.jl")
     include("models/TestLinearElastic.jl")
     include("models/TestLinearElastoplastic.jl")
