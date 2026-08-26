@@ -1,6 +1,6 @@
 name = "ConstitutiveModels"
 uuid = "fc6ee7eb-129a-416f-804b-d7271ece6a3a"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Craig M. Hamel <cmhamel32@gmail.com> and contributors"]
 
 [deps]
@@ -21,7 +21,7 @@ ConstitutiveModelsRecipesBaseExt = ["LaTeXStrings", "RecipesBase"]
 
 [compat]
 Aqua = "0.8"
-Distributions = "0.25.127"
+Distributions = "0.25"
 DocStringExtensions = "0.9"
 ForwardDiff = "1"
 InverseLangevinApproximations = "0.2"

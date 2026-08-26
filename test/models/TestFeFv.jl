@@ -1,19 +1,3 @@
-# FeFv (single-Prony hyperviscoelastic, Ortiz-Stainier variational update)
-# tests.
-#
-# The uniaxial-loading closed-form solution in test_fefv_uniaxial_loading
-# mirrors the reference Python/JAX HyperViscoelastic test suite this model
-# appears to be ported from (HyperViscoUniaxialStrain.test_loading_only):
-# a single Maxwell branch relaxing a prescribed uniaxial log-strain rate
-# obeys a linear ODE with a known closed-form solution, independent of the
-# Julia implementation being tested against itself.
-#
-# NOTE: the property keys "equilibrium bulk modulus" / "equilibrium shear
-# modulus" below are ASSUMED to match `initialize_props(::Hencky, inputs)`
-# (mirroring the Python reference's key names). Adjust if your Hencky model
-# uses different key strings -- everything downstream (props[2], props[3])
-# depends on getting these right.
-
 function log_symm(A)
     return 0.5 * log(tdot(A))
 end
@@ -51,7 +35,7 @@ function test_fefv_interface()
 
     Z = initialize_state(model)
     @test length(Z) == num_state_variables(model) == 9
-    @test Z == collect(one(Tensor{2, 3, Float64, 9}))
+    @test Z == vec(collect(one(Tensor{2, 3, Float64, 9})))
 
     @test length(state_variable_names(model)) == num_state_variables(model)
 

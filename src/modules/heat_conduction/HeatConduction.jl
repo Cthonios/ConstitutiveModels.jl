@@ -3,15 +3,21 @@ abstract type AbstractHeatConduction <: AbstractConstitutiveModule end
 # should we rename below to something like push-forward or pull-back?
 # TODO check against Gurtin-Fried-Anand
 # non-linear kinematics
-function map_temperature_gradient(∇u::Tensor{2, 3, T, 9}, ∇θ) where T <: Number
+# function map_temperature_gradient(∇u::Tensor{2, 3, T, 9}, ∇θ) where T <: Number
+#     F = ∇u + one(∇u)
+#     J = det(F)
+#     C_inv = inv(tdot(F))
+#     return J * dot(C_inv, ∇θ)
+# end
+
+function _map_heat_flux(∇u::Tensor{2, 3, T, 9}, ∇θ) where T <: Number
     F = ∇u + one(∇u)
-    C_inv = inv(tdot(F))
-    # return C_inv * ∇θ
-    return dot(C_inv, ∇θ)
+    J = det(F)
+    return J * dot(inv(F), ∇θ)
 end
 
 # linear kinematics
-function map_temperature_gradient(::SymmetricTensor{2, 3, T, 6}, ∇θ) where T <: Number
+function _map_heat_flux(::SymmetricTensor{2, 3, T, 6}, ∇θ) where T <: Number
     return ∇θ
 end
 
@@ -59,6 +65,9 @@ end
 
 function heat_flux(model::FouriersLaw, props, kin, θ, ∇θ)
     k = as_tensor(model.symmetry, props)
-    ∇θ = map_temperature_gradient(kin, ∇θ)
-    return -dot(k, ∇θ)
+    # ∇θ = map_temperature_gradient(kin, ∇θ)
+    q = -dot(k, ∇θ)
+    # return -dot(k, ∇θ)
+    Q = _map_heat_flux(kin, q)
+    return Q
 end

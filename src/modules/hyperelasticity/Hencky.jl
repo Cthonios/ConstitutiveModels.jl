@@ -128,5 +128,72 @@ function material_tangent(::Hencky, props, ∇u::Tensor{2, 3, T, 9}, θ) where T
 
     return _convect_tangent(ℂ, S, F)
 end
+# function material_tangent(
+#     ::Hencky,
+#     props,
+#     ∇u::Tensor{2, 3, T, 9},
+#     θ,
+# ) where {T <: Number}
+
+#     κ, μ = props
+
+#     F  = ∇u + one(∇u)
+#     C  = tdot(F)
+#     IC = inv(C)
+#     I  = one(C)
+
+#     E    = 0.5 * log(C)
+#     trE  = tr(E)
+#     devE = dev(E)
+
+#     # ∂ψ/∂E
+#     A = κ * trE * I + 2μ * devE
+
+#     # PK2 stress
+#     S = IC ⋅ A
+
+#     # ∂²ψ/∂E²
+#     IxI  = I ⊗ I
+#     Isym = 0.5 * (otimesu(I, I) + otimesl(I, I))
+
+#     H = κ * IxI +
+#         2μ * (Isym - (1/3) * IxI)
+
+#     # ∂A/∂C
+#     dlogCdC =
+#         norm(C - I) < sqrt(eps(real(T))) ?
+#         Isym :
+#         dlog(C)
+
+#     dAdC = Tensor{4, 3, T, 81}() do i, j, k, l
+#         s = zero(T)
+
+#         @inbounds for m in 1:3, n in 1:3
+#             s += H[i, j, m, n] *
+#                  dlogCdC[m, n, k, l]
+#         end
+
+#         0.5 * s
+#     end
+
+#     # ∂S/∂C
+#     dSdC = Tensor{4, 3, T, 81}() do i, j, k, l
+#         s = zero(T)
+
+#         @inbounds for m in 1:3
+#             s += IC[i, m] * dAdC[m, j, k, l]
+#         end
+
+#         s - 0.5 * (
+#             IC[i, k] * S[l, j] +
+#             IC[i, l] * S[k, j]
+#         )
+#     end
+
+#     # ℂ = 2 ∂S/∂C
+#     ℂ = 2 * dSdC
+
+#     return _convect_tangent(ℂ, S, F)
+# end
 
 p_wave_modulus(::Hencky, props) = props[1] + 4 * props[2] / 3
