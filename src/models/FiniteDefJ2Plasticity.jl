@@ -232,14 +232,42 @@ end
                      2μ̄ * β₄ * c_dev_n2
     end
 
-    # Pull-back: spatial → material
+    # Pull-back: spatial → material,
+    #   CC[A,B,C,D] = F⁻¹[A,a] F⁻¹[B,b] c[a,b,c,d] F⁻¹[C,c] F⁻¹[D,d]
+    #
+    # Contracting one index at a time costs 4·3⁵ multiplies; contracting all
+    # four at once costs 3⁸ -- about thirty times more for the same result.
+    T1 = MArray{Tuple{3,3,3,3},T,4,81}(ntuple(_ -> zero(T), Val(81)))
+    for A in 1:3, b in 1:3, c in 1:3, d in 1:3
+        v = zero(T)
+        for a in 1:3
+            v += F_inv[A, a] * CC_spatial[a, b, c, d]
+        end
+        T1[A, b, c, d] = v
+    end
+    T2 = MArray{Tuple{3,3,3,3},T,4,81}(ntuple(_ -> zero(T), Val(81)))
+    for A in 1:3, B in 1:3, c in 1:3, d in 1:3
+        v = zero(T)
+        for b in 1:3
+            v += F_inv[B, b] * T1[A, b, c, d]
+        end
+        T2[A, B, c, d] = v
+    end
+    T3 = MArray{Tuple{3,3,3,3},T,4,81}(ntuple(_ -> zero(T), Val(81)))
+    for A in 1:3, B in 1:3, C in 1:3, d in 1:3
+        v = zero(T)
+        for c in 1:3
+            v += F_inv[C, c] * T2[A, B, c, d]
+        end
+        T3[A, B, C, d] = v
+    end
     CC = MArray{Tuple{3,3,3,3},T,4,81}(ntuple(_ -> zero(T), Val(81)))
     for A in 1:3, B in 1:3, C in 1:3, D in 1:3
-        val = zero(T)
-        for a in 1:3, b in 1:3, c in 1:3, d in 1:3
-            val += F_inv[A, a] * F_inv[B, b] * CC_spatial[a, b, c, d] * F_inv[C, c] * F_inv[D, d]
+        v = zero(T)
+        for d in 1:3
+            v += F_inv[D, d] * T3[A, B, C, d]
         end
-        CC[A, B, C, D] = val
+        CC[A, B, C, D] = v
     end
 
     return _convect_tangent(CC, S, F)
