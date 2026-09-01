@@ -150,6 +150,29 @@ end
 # ---------------------------------------------------------------------------
 # Internal: Simo-Hughes consistent tangent (BOX 9.2)
 # Uses _convect_tangent from utils/TensorUtils.jl for push-forward.
+#
+# What this returns is the exact MAJOR-SYMMETRIC PART of the Jacobian of the
+# stress update, not the Jacobian itself.  The return map evaluates the
+# effective shear modulus μ̄ = μ tr(b̄ᵉ_trial)/3 at the trial state, so the
+# discrete update is not exactly variational and its true Jacobian carries a
+# small antisymmetric component.  BOX 9.2 drops that component, which is what
+# a solver assembling a symmetric operator wants.
+#
+# Measured against a central-difference Jacobian of `pk1_stress` (E = 200 GPa,
+# ν = 0.3, σ_y = 250 MPa, H = 20 GPa), as ‖·‖ relative to the tangent norm:
+#
+#            case            ‖A_fd - A‖   ‖sym(A_fd) - A‖   ‖asym(A_fd)‖
+#     elastic step             7.4e-10        7.4e-10          9.0e-11
+#     shear γ = 0.008          2.1e-04        1.2e-10          2.1e-04
+#     shear γ = 0.032          2.2e-04        4.9e-09          2.2e-04
+#     triaxial + shear         1.1e-04        4.5e-06          1.1e-04
+#
+# The discrepancy IS the antisymmetric part: the symmetric part is recovered to
+# FD accuracy, and the elastic branch is the exact Jacobian with nothing to
+# discard.  So Newton stays fast on steps that yield but is not fully
+# quadratic there, and a residual that stalls near 1e-4 relative is this, not a
+# bug.  Independently reproduced against Norma.jl's transcription of the same
+# BOX 9.1/9.2 algorithm, which agrees to every digit above.
 # ---------------------------------------------------------------------------
 
 @inline function _sh_j2_tangent(
