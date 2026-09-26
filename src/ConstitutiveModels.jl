@@ -2,6 +2,7 @@ module ConstitutiveModels
 
 # methods
 export as_tensor,
+       bulk_modulus,
        cauchy_stress,
        cauchy_stress_temperature_modulus,
        deformation_gradient,
@@ -11,9 +12,13 @@ export as_tensor,
        entropy,
        heat_capacity,
        heat_flux,
+       has_volumetric_isochoric_split,
        helmholtz_free_energy,
        initialize_props,
        initialize_state,
+       isochoric_helmholtz_free_energy,
+       isochoric_material_tangent,
+       isochoric_pk1_stress,
        linear_strain,
        material_tangent,
        num_properties,
@@ -26,7 +31,10 @@ export as_tensor,
        simulate_material_point,
        spatial_tangent,
        state_variable_names,
-       velocity_gradient
+       velocity_gradient,
+       volumetric_strain,
+       volumetric_strain_derivative,
+       volumetric_strain_second_derivative
 # heat conduction models
 export FouriersLaw
 # hyperelasticity models

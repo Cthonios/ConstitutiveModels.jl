@@ -68,14 +68,17 @@ end
 # Internal: Simo-Hughes stress update (BOX 9.1)
 # ---------------------------------------------------------------------------
 
+# `κ` is the bulk modulus used for the volumetric response; the public
+# functions pass the model's own κ = λ + 2μ/3, and the `isochoric_*` functions
+# pass zero, which removes the volumetric energy and stress and leaves the
+# return map unchanged (it acts on the isochoric b̄ᵉ alone).
 @inline function _sh_j2_stress(
     props,
     F::Tensor{2,3,T,9},
     state_old::AbstractVector,
+    κ::T,
 ) where T
-    # Convert Lamé λ → bulk modulus κ = λ + 2μ/3
-    λ = T(props[2]); μ = T(props[3]); σ_y = T(props[4]); K = T(props[5])
-    κ = λ + 2μ / 3
+    μ = T(props[3]); σ_y = T(props[4]); K = T(props[5])
 
     Fp_old = Tensor{2,3,T,9}(ntuple(i -> T(state_old[i]), Val(9)))
     α_n    = T(state_old[10])
@@ -186,9 +189,9 @@ end
     μ̄::T,
     Δγ::T,
     α_n::T,
+    κ::T,
 ) where T
-    λ = T(props[2]); μ = T(props[3]); σ_y = T(props[4]); K = T(props[5])
-    κ = λ + 2μ / 3
+    μ = T(props[3]); σ_y = T(props[4]); K = T(props[5])
 
     J = det(F)
     F_inv = inv(F)
@@ -277,15 +280,38 @@ end
 # CM public API
 # ---------------------------------------------------------------------------
 
+# Bulk modulus κ = λ + 2μ/3 from the property vector [ρ, λ, μ, σ_y, H].
+@inline _j2_bulk_modulus(props, ::Type{T}) where T = T(props[2]) + 2 * T(props[3]) / 3
+
+@inline function _j2_energy(props, Z_old, Z_new, ∇u, κ)
+    F = ∇u + one(∇u)
+    W, _, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old, κ)
+    Z_new .= state_new_vec
+    return W
+end
+
+@inline function _j2_pk1(props, Z_old, Z_new, ∇u, κ)
+    F = ∇u + one(∇u)
+    _, P, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old, κ)
+    Z_new .= state_new_vec
+    return P
+end
+
+@inline function _j2_tangent(props, Z_old, Z_new, ∇u, κ)
+    F = ∇u + one(∇u)
+    W, P, state_new_vec, s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n =
+        _sh_j2_stress(props, F, Z_old, κ)
+    Z_new .= state_new_vec
+    return _sh_j2_tangent(props, F, Z_old, P,
+                           s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n, κ)
+end
+
 function helmholtz_free_energy(
     ::FiniteDefJ2Plasticity,
     props, Z_old, Z_new, Δt,
     ∇u, θ
 )
-    F = ∇u + one(∇u)
-    W, _, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old)
-    Z_new .= state_new_vec
-    return W
+    return _j2_energy(props, Z_old, Z_new, ∇u, _j2_bulk_modulus(props, eltype(∇u)))
 end
 
 function pk1_stress(
@@ -293,10 +319,7 @@ function pk1_stress(
     props, Z_old, Z_new, Δt,
     ∇u, θ
 )
-    F = ∇u + one(∇u)
-    _, P, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old)
-    Z_new .= state_new_vec
-    return P
+    return _j2_pk1(props, Z_old, Z_new, ∇u, _j2_bulk_modulus(props, eltype(∇u)))
 end
 
 function material_tangent(
@@ -304,12 +327,45 @@ function material_tangent(
     props, Z_old, Z_new, Δt,
     ∇u, θ
 )
-    F = ∇u + one(∇u)
-    W, P, state_new_vec, s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n =
-        _sh_j2_stress(props, F, Z_old)
-    Z_new .= state_new_vec
-    return _sh_j2_tangent(props, F, Z_old, P,
-                           s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n)
+    return _j2_tangent(props, Z_old, Z_new, ∇u, _j2_bulk_modulus(props, eltype(∇u)))
+end
+
+# ---------------------------------------------------------------------------
+# Volumetric-isochoric split (see Interface.jl)
+#
+#   W = κ/2 (J - 1)² + μ/2 (tr b̄ᵉ - 3),   θ(J) = J - 1,   θ'(J) = 1,
+#
+# the split of BOX 9.1: det b̄ᵉ = 1 makes the isochoric term independent of J.
+# ---------------------------------------------------------------------------
+
+has_volumetric_isochoric_split(::FiniteDefJ2Plasticity) = true
+volumetric_strain(::FiniteDefJ2Plasticity, J) = J - one(J)
+volumetric_strain_derivative(::FiniteDefJ2Plasticity, J) = one(J)
+volumetric_strain_second_derivative(::FiniteDefJ2Plasticity, J) = zero(J)
+bulk_modulus(::FiniteDefJ2Plasticity, props) = _j2_bulk_modulus(props, eltype(props))
+
+function isochoric_helmholtz_free_energy(
+    ::FiniteDefJ2Plasticity,
+    props, Z_old, Z_new, Δt,
+    ∇u, θ
+)
+    return _j2_energy(props, Z_old, Z_new, ∇u, zero(eltype(∇u)))
+end
+
+function isochoric_pk1_stress(
+    ::FiniteDefJ2Plasticity,
+    props, Z_old, Z_new, Δt,
+    ∇u, θ
+)
+    return _j2_pk1(props, Z_old, Z_new, ∇u, zero(eltype(∇u)))
+end
+
+function isochoric_material_tangent(
+    ::FiniteDefJ2Plasticity,
+    props, Z_old, Z_new, Δt,
+    ∇u, θ
+)
+    return _j2_tangent(props, Z_old, Z_new, ∇u, zero(eltype(∇u)))
 end
 
 """

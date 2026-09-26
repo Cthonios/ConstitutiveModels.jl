@@ -139,7 +139,80 @@ function test_finite_def_j2_tangent_vs_fd()
     end
 end
 
+function test_finite_def_j2_volumetric_isochoric_split()
+    # The model splits as W = κ/2 (J-1)² + W_iso(b̄ᵉ) with p = κ(J-1).  The
+    # isochoric functions must return W_iso, P_iso = s F⁻ᵀ and its tangent,
+    # update the state exactly as the full functions do, and be independent
+    # of J.  Each full quantity must equal its isochoric part plus the
+    # volumetric part κ(J-1) J F⁻ᵀ (energy: κ/2 (J-1)²).
+    model = FiniteDefJ2Plasticity()
+    inputs = Dict(
+        "density"           => 2700.0,
+        "Young's modulus"   => 70.0e9,
+        "Poisson's ratio"   => 0.36,
+        "yield stress"      => 250.0e6,
+        "hardening modulus" => 0.7e9,
+    )
+    props = initialize_props(model, inputs)
+    λ, μ = props[2], props[3]
+    @test has_volumetric_isochoric_split(model)
+    @test bulk_modulus(model, props) ≈ λ + 2μ / 3
+    κ = bulk_modulus(model, props)
+    @test volumetric_strain(model, 1.0) == 0.0
+    @test volumetric_strain_derivative(model, 1.0) == 1.0
+    @test volumetric_strain_second_derivative(model, 1.3) == 0.0
+    @test volumetric_strain(model, 1.3) ≈ 0.3
+
+    # a distorted state with rotation, shear and dilatation; γ = 0.002 is
+    # elastic, γ = 0.05 yields
+    for γ in (2.0e-3, 5.0e-2)
+        ∇u = Tensor{2, 3}((i, j) -> 0.4γ * (i + 2j) / 5 + (i == j ? 0.3γ : 0.0) + (i == 1 && j == 2 ? γ : 0.0))
+        F = ∇u + one(∇u)
+        J = det(F)
+        Z0 = initialize_state(model)
+
+        Za = copy(Z0); Zb = copy(Z0)
+        W  = helmholtz_free_energy(model, props, Z0, Za, 0.0, ∇u, 0.0)
+        Wi = isochoric_helmholtz_free_energy(model, props, Z0, Zb, 0.0, ∇u, 0.0)
+        @test W ≈ Wi + κ / 2 * (J - 1)^2
+        @test Za == Zb
+
+        Za = copy(Z0); Zb = copy(Z0)
+        P  = pk1_stress(model, props, Z0, Za, 0.0, ∇u, 0.0)
+        Pi = isochoric_pk1_stress(model, props, Z0, Zb, 0.0, ∇u, 0.0)
+        Pv = κ * (J - 1) * J * inv(F)'
+        @test P ≈ Pi + Pv
+        @test Za == Zb
+        @test (γ > 1e-2) == (Za[10] > 0)      # the second state yields
+
+        # the isochoric stress is deviatoric in the Kirchhoff sense: tr(P_iso Fᵀ) = 0
+        @test abs(tr(dot(Pi, transpose(F)))) < 1e-8 * norm(Pi)
+
+        # the isochoric response does not change under a pure dilatation
+        c = 1.07
+        Zc = copy(Z0)
+        Wc = isochoric_helmholtz_free_energy(model, props, Z0, Zc, 0.0, c * F - one(F), 0.0)
+        @test Wc ≈ Wi rtol = 1e-12
+
+        # tangent: A = A_iso + ∂P_vol/∂∇u, the latter by central differences
+        Za = copy(Z0); Zb = copy(Z0)
+        A  = material_tangent(model, props, Z0, Za, 0.0, ∇u, 0.0)
+        Ai = isochoric_material_tangent(model, props, Z0, Zb, 0.0, ∇u, 0.0)
+        Pvol(g) = (Fg = g + one(g); Jg = det(Fg); κ * (Jg - 1) * Jg * inv(Fg)')
+        h = 1.0e-6
+        for k in 1:3, l in 1:3
+            E = Tensor{2, 3}((i, j) -> (i == k && j == l) ? h : 0.0)
+            D = (Pvol(∇u + E) - Pvol(∇u - E)) / (2h)
+            for i in 1:3, j in 1:3
+                @test isapprox(A[i, j, k, l] - Ai[i, j, k, l], D[i, j];
+                               rtol = 1e-6, atol = 1e-6 * κ)
+            end
+        end
+    end
+end
+
 test_finite_def_j2_interface()
 test_finite_def_j2_uniaxial_strain()
 test_finite_def_j2_cauchy_from_pk1()
 test_finite_def_j2_tangent_vs_fd()
+test_finite_def_j2_volumetric_isochoric_split()

@@ -180,6 +180,79 @@ function spatial_tangent(
     ), ε)
 end
 
+# ---------------------------------------------------------------------------
+# Volumetric-isochoric split
+# ---------------------------------------------------------------------------
+#
+# A model has an exact volumetric-isochoric split when its stored energy is
+#
+#     W(F) = W_vol(θ(J)) + W_iso(F̄),   F̄ = J^{-1/3} F,   J = det F,
+#
+# with W_vol quadratic in a volumetric strain measure θ(J) that vanishes with
+# unit slope at J = 1,
+#
+#     W_vol(θ) = κ/2 θ²,   p = ∂W_vol/∂θ = κ θ,
+#
+# so that κ is the bulk modulus.  Such a model exposes the two parts
+# separately: a mixed element replaces θ by its projection onto an
+# element-wise polynomial space and adds the volumetric response back at the
+# projected strain (the mean-dilatation formulation), which requires the
+# isochoric response alone, evaluated at the pointwise deformation, and the
+# scalar functions θ(J), θ'(J) and κ.  Internal variables are updated by the
+# isochoric functions exactly as by the full ones.
+#
+# The volumetric first Piola-Kirchhoff stress that completes the split is
+# p θ'(J) J F^{-T}, and the full stress is the sum of the two parts.
+
+"""
+Whether the model has an exact volumetric-isochoric split with a quadratic
+volumetric energy (see the comment above).  Models with the split implement
+`volumetric_strain`, `volumetric_strain_derivative`,
+`volumetric_strain_second_derivative`, `bulk_modulus`,
+`isochoric_helmholtz_free_energy`, `isochoric_pk1_stress` and
+`isochoric_material_tangent`.
+$(TYPEDSIGNATURES)
+"""
+has_volumetric_isochoric_split(::AbstractConstitutiveModel) = false
+
+"""
+The volumetric strain measure θ(J) of a model with the split.
+"""
+function volumetric_strain end
+
+"""
+The derivative θ'(J) of the volumetric strain measure.
+"""
+function volumetric_strain_derivative end
+
+"""
+The second derivative θ''(J) of the volumetric strain measure.
+"""
+function volumetric_strain_second_derivative end
+
+"""
+The bulk modulus κ of a model with the split, from its property vector.
+"""
+function bulk_modulus end
+
+"""
+The isochoric part W_iso(F̄) of the stored energy; same arguments as
+`helmholtz_free_energy`.
+"""
+function isochoric_helmholtz_free_energy end
+
+"""
+The isochoric part of the first Piola-Kirchhoff stress; same arguments as
+`pk1_stress`.
+"""
+function isochoric_pk1_stress end
+
+"""
+The isochoric part of the material tangent ∂P/∂∇u; same arguments as
+`material_tangent`.
+"""
+function isochoric_material_tangent end
+
 # for constitutive "modules"
 abstract type AbstractConstitutiveModule <: AbstractConstitutive end
 
