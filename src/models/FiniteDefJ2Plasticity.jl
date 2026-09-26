@@ -283,17 +283,29 @@ end
 # Bulk modulus κ = λ + 2μ/3 from the property vector [ρ, λ, μ, σ_y, H].
 @inline _j2_bulk_modulus(props, ::Type{T}) where T = T(props[2]) + 2 * T(props[3]) / 3
 
+# The state container is a view into the assembler's storage with a length
+# known only at run time.  Broadcasting an SVector into it (`Z_new .= vec`)
+# carries the DimensionMismatch path of the broadcast shape check, whose
+# message is built with `show`; that path cannot be compiled for a GPU, so
+# the entries are copied one by one.
+@inline function _store_state!(Z_new, state_new_vec::SVector{N, T}) where {N, T}
+    for i in 1:N
+        Z_new[i] = state_new_vec[i]
+    end
+    return nothing
+end
+
 @inline function _j2_energy(props, Z_old, Z_new, ∇u, κ)
     F = ∇u + one(∇u)
     W, _, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old, κ)
-    Z_new .= state_new_vec
+    _store_state!(Z_new, state_new_vec)
     return W
 end
 
 @inline function _j2_pk1(props, Z_old, Z_new, ∇u, κ)
     F = ∇u + one(∇u)
     _, P, state_new_vec, _, _, _, _, _, _ = _sh_j2_stress(props, F, Z_old, κ)
-    Z_new .= state_new_vec
+    _store_state!(Z_new, state_new_vec)
     return P
 end
 
@@ -301,7 +313,7 @@ end
     F = ∇u + one(∇u)
     W, P, state_new_vec, s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n =
         _sh_j2_stress(props, F, Z_old, κ)
-    Z_new .= state_new_vec
+    _store_state!(Z_new, state_new_vec)
     return _sh_j2_tangent(props, F, Z_old, P,
                            s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n, κ)
 end
