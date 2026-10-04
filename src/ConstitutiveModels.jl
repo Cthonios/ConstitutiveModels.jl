@@ -35,6 +35,8 @@ export as_tensor,
        volumetric_strain,
        volumetric_strain_derivative,
        volumetric_strain_second_derivative
+# helper types
+export PropertyInputs
 # heat conduction models
 export FouriersLaw
 # hyperelasticity models
@@ -86,11 +88,12 @@ using Roots
 using StaticArrays
 using Tensors
 
+include("utils/Properties.jl")
+
 include("utils/Eigen.jl")
 include("utils/ElasticConstants.jl")
 include("utils/Kinematics.jl")
 include("utils/MaterialSymmetry.jl")
-include("utils/Properties.jl")
 include("utils/StateVariables.jl")
 include("utils/TensorUtils.jl")
 

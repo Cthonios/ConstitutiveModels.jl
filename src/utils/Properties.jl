@@ -1,11 +1,92 @@
-function print_property_keys(io::IO, inputs::Dict{String})
+function print_property_keys(io::IO, inputs)
     for key in keys(inputs)
         println(io, "  ", key)
     end
 end
 
-struct BadNestedPropertyError{D <: Dict} <: Exception
-    inputs::D
+# function print_property_keys(io::IO, inputs::PropertyInputs{T}) where T <: Number
+#     for key in keys(inputs)
+#         println(io, "  ", key)
+#     end
+# end
+
+const PropertyType{T} = Union{T, String} where T <: Number
+
+@inline _fill!(d::Dict{String, Any}) = d
+@inline function _fill!(
+    d::Dict{String, Any}, p::Pair{String}, rest::Vararg{Pair{String}, N}
+) where N
+    d[p.first] = p.second
+    return _fill!(d, rest...)
+end
+
+struct PropertyInputs{T <: Number}
+    data::Dict{String, Any}
+
+    function PropertyInputs()
+        return PropertyInputs{Float64}()
+    end
+
+    function PropertyInputs{T}() where T <: Number
+        data = Dict{String, Any}()
+        new{T}(data)
+    end
+
+    function PropertyInputs(data::Dict{String})
+        return PropertyInputs{Float64}(data)
+    end
+
+    function PropertyInputs{T}(data::Dict{String}) where T <: Number
+        new{T}(data)
+    end
+
+    function PropertyInputs(
+        first::Pair{String}, pairs::Vararg{Pair{String}, N}
+    ) where N
+        return PropertyInputs{Float64}(first, pairs...)
+    end
+
+    function PropertyInputs{T}(
+        first::Pair{String}, pairs::Vararg{Pair{String}, N}
+    ) where {T <: Number, N}
+        return new{T}(_fill!(Dict{String, Any}(), first, pairs...))
+    end
+end
+
+function Base.get(inputs::PropertyInputs{T}, key::String, default) where T <: Number
+    return get(inputs.data, key, default)
+end
+
+function Base.getindex(inputs::PropertyInputs{T}, key::String) where T <: Number
+    return inputs.data[key]
+end
+
+function Base.haskey(inputs::PropertyInputs{T}, key::String) where T <: Number
+    return haskey(inputs.data, key)
+end
+
+function Base.keys(inputs::PropertyInputs{T}) where T <: Number
+    return keys(inputs.data)
+end
+
+function Base.setindex!(inputs::PropertyInputs{T}, val, key::String) where T <: Number
+    inputs.data[key] = val
+    return nothing
+end
+
+function Base.values(inputs::PropertyInputs{T}) where T <: Number
+    return values(inputs.data)
+end
+
+function Base.show(io::IO, inputs::PropertyInputs{T}) where T <: Number
+    for key in keys(inputs)
+        println(io, "  ", key)
+    end
+    # println(io, inputs.data)
+end
+
+struct BadNestedPropertyError{T <: Number} <: Exception
+    inputs::PropertyInputs{T}
     key::String
 end
 
@@ -21,8 +102,8 @@ function bad_nested_property_input(inputs, key)
     throw(BadNestedPropertyError(inputs, key))
 end
 
-struct PropertyNotFoundError{D <: Dict} <: Exception
-    inputs::D
+struct PropertyNotFoundError{T <: Number} <: Exception
+    inputs::PropertyInputs{T}
     key::String
 end
 
@@ -45,12 +126,12 @@ function get_property(inputs::Dict{String}, key::String, default = nothing)
         # if isa(val, Float64)
         #     return val::Float64
         # return val::Float64
-        return val
+        return val::Float64
     elseif isa(val, Dict)
         # one of many potential cases
         if haskey(val, "mean") && haskey(val, "variance")
             dist = Normal(val["mean"], val["variance"])
-            return rand(dist)
+            return rand(dist)::Float64
         else
             bad_nested_property_input(val, key)
         end
@@ -58,4 +139,37 @@ function get_property(inputs::Dict{String}, key::String, default = nothing)
         # default case
         return default
     end
+end
+
+function get_property(inputs::PropertyInputs{T}, key::String, type::Type{String}, default = nothing) where T <: Number
+    if default === nothing
+        if !haskey(inputs, key)
+            property_not_found_error(inputs, key)
+        end
+        return inputs[key]::String
+    else
+        return get(inputs, key, default)
+    end
+end
+
+function get_property(inputs::PropertyInputs{T}, key::String, type::Type{T}, default = nothing) where T <: Number
+    if default === nothing
+        if !haskey(inputs, key)
+            property_not_found_error(inputs, key)
+        end
+        return inputs[key]::T
+    else
+        return get(inputs, key, default)
+    end
+end
+
+function get_property(inputs::PropertyInputs{T}, key::String, type::Type{<:Dict{String}}) where T <: Number
+    # val = get(inputs, key, default)
+    # if val === nothing
+    #     property_not_found_error(inputs, key)
+    # else
+    #     return val
+    # end
+    # return val
+    return inputs.data[key]
 end

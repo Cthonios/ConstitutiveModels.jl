@@ -11,7 +11,7 @@ function test_elastic_constants()
     E = 70.e9
     ν = 0.3
 
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Young's modulus" => E,
         "Poisson's ratio" => ν
     )
@@ -29,56 +29,56 @@ function test_elastic_constants()
 
     # reuse above values for rest of tests
     # young's modulus/bulk modulus combo
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Young's modulus" => 70e9,
         "bulk modulus"    => 5.833333333333333e10
     )
     compare(props, CM.ElasticConstants(inputs))
 
     # young's modulus/lame constant combo
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Young's modulus"       => 70e9,
         "Lamé's first constant" => 4.038461538461538e10
     )
     compare(props, CM.ElasticConstants(inputs))
 
     # young's modulus/shear modulus combo
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Young's modulus" => 70e9,
         "shear modulus"   => 2.6923076923076923e10
     )
     compare(props, CM.ElasticConstants(inputs))
 
     # young's modulus/bad property combo
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Young's modulus" => 70e9,
         "some other prop" => 1.0
     )
     @test_throws CM.ElasticConstantsError CM.ElasticConstants(inputs)
 
     # poisson's ratio/bulk modulus constant
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Poisson's ratio" => 0.3,
         "bulk modulus"    => 5.833333333333333e10
     )
     compare(props, CM.ElasticConstants(inputs))
 
     # poisson's ratio/lame constant combo
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Poisson's ratio"       => 0.3,
         "Lamé's first constant" => 4.038461538461538e10
     )
     compare(props, CM.ElasticConstants(inputs))
 
     # poisson's ratio/shear modulus
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Poisson's ratio" => 0.3,
         "shear modulus"   => 2.6923076923076923e10
     )
     compare(props, CM.ElasticConstants(inputs))
 
     # poisson's ratio/bad property combo
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Poisson's ratio"  => 0.3,
         "some other props" => 1.0
     )
@@ -86,28 +86,28 @@ function test_elastic_constants()
     @test_throws CM.ElasticConstantsError CM.ElasticConstants(inputs)
 
     # bulk modulus/lame param combo
-    inputs = Dict(
+    inputs = PropertyInputs(
         "bulk modulus"          => 5.833333333333333e10,
         "Lamé's first constant" => 4.038461538461538e10
     )
     compare(props, CM.ElasticConstants(inputs))
 
     # bulk modulus/shear modulus
-    inputs = Dict(
+    inputs = PropertyInputs(
         "bulk modulus"  => 5.833333333333333e10,
         "shear modulus" => 2.6923076923076923e10
     )
     compare(props, CM.ElasticConstants(inputs))
 
     # bulk modulus/bad property combo
-    inputs = Dict(
+    inputs = PropertyInputs(
         "bulk modulus"     => 0.3,
         "some other props" => 1.0
     )
     @test_throws CM.ElasticConstantsError CM.ElasticConstants(inputs)
     
     # lame param/shear modulus combo
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Lamé's first constant" => 4.038461538461538e10,
         "shear modulus"         => 2.6923076923076923e10
     )
