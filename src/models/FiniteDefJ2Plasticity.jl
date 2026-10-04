@@ -182,6 +182,28 @@ end
 # remaining discrepancy is the antisymmetric part; the elastic branch is the
 # exact Jacobian.  Newton therefore stays fast on steps that yield but is not
 # fully quadratic there.
+
+# One step of the pull-back: contract index `k` of the fourth-order tensor X
+# with F⁻¹, X'[..., K, ...] = Σ_x F⁻¹[K, x] X[..., x, ...].  Built from an
+# ntuple into an immutable Tensor, as _convect_tangent is: a mutable 81-entry
+# buffer (MArray) is allocated on the device heap by GPU compilers, once per
+# call, which exhausts the CUDA malloc heap in a tangent kernel.
+@inline function _pull_back_index(F_inv::Tensor{2,3,T,9}, X, ::Val{k}) where {T, k}
+    data = ntuple(Val(81)) do lin
+        l, rem = divrem(lin - 1, 27)
+        kk, rem = divrem(rem, 9)
+        j, i = divrem(rem, 3)
+        idx = (i + 1, j + 1, kk + 1, l + 1)
+        v = zero(T)
+        for x in 1:3
+            jdx = Base.setindex(idx, x, k)
+            v += F_inv[idx[k], x] * X[jdx[1], jdx[2], jdx[3], jdx[4]]
+        end
+        v
+    end
+    return Tensor{4, 3, T, 81}(data)
+end
+
 @inline function _sh_j2_tangent(
     props,
     F::Tensor{2,3,T,9},
@@ -244,38 +266,10 @@ end
     #
     # Contracting one index at a time costs 4·3⁵ multiplies; contracting all
     # four at once costs 3⁸ -- about thirty times more for the same result.
-    T1 = MArray{Tuple{3,3,3,3},T,4,81}(ntuple(_ -> zero(T), Val(81)))
-    for A in 1:3, b in 1:3, c in 1:3, d in 1:3
-        v = zero(T)
-        for a in 1:3
-            v += F_inv[A, a] * CC_spatial[a, b, c, d]
-        end
-        T1[A, b, c, d] = v
-    end
-    T2 = MArray{Tuple{3,3,3,3},T,4,81}(ntuple(_ -> zero(T), Val(81)))
-    for A in 1:3, B in 1:3, c in 1:3, d in 1:3
-        v = zero(T)
-        for b in 1:3
-            v += F_inv[B, b] * T1[A, b, c, d]
-        end
-        T2[A, B, c, d] = v
-    end
-    T3 = MArray{Tuple{3,3,3,3},T,4,81}(ntuple(_ -> zero(T), Val(81)))
-    for A in 1:3, B in 1:3, C in 1:3, d in 1:3
-        v = zero(T)
-        for c in 1:3
-            v += F_inv[C, c] * T2[A, B, c, d]
-        end
-        T3[A, B, C, d] = v
-    end
-    CC = MArray{Tuple{3,3,3,3},T,4,81}(ntuple(_ -> zero(T), Val(81)))
-    for A in 1:3, B in 1:3, C in 1:3, D in 1:3
-        v = zero(T)
-        for d in 1:3
-            v += F_inv[D, d] * T3[A, B, C, d]
-        end
-        CC[A, B, C, D] = v
-    end
+    T1 = _pull_back_index(F_inv, CC_spatial, Val(1))
+    T2 = _pull_back_index(F_inv, T1, Val(2))
+    T3 = _pull_back_index(F_inv, T2, Val(3))
+    CC = _pull_back_index(F_inv, T3, Val(4))
 
     return _convect_tangent(CC, S, F)
 end
