@@ -154,30 +154,34 @@ end
 # Internal: Simo-Hughes consistent tangent (BOX 9.2)
 # Uses _convect_tangent from utils/TensorUtils.jl for push-forward.
 #
-# What this returns is the exact MAJOR-SYMMETRIC PART of the Jacobian of the
-# stress update, not the Jacobian itself.  The return map evaluates the
-# effective shear modulus μ̄ = μ tr(b̄ᵉ_trial)/3 at the trial state, so the
-# discrete update is not exactly variational and its true Jacobian carries a
-# small antisymmetric component.  BOX 9.2 drops that component, which is what
-# a solver assembling a symmetric operator wants.
+# What this returns is the major-symmetric part of the Jacobian of the stress
+# update, not the Jacobian itself.  The return map evaluates the effective
+# shear modulus μ̄ = μ tr(b̄ᵉ_trial)/3 at the trial state, so the discrete
+# update is not exactly variational and its Jacobian carries an antisymmetric
+# component.  BOX 9.2 drops that component, which is what a solver assembling
+# a symmetric operator wants.
 #
-# Measured against a central-difference Jacobian of `pk1_stress` (E = 200 GPa,
-# ν = 0.3, σ_y = 250 MPa, H = 20 GPa), as ‖·‖ relative to the tangent norm:
+# The coefficient β₂ of BOX 9.2 is (1 - 1/β₀) (2/3) ‖s_trial‖ Δγ / μ̄, with
+# the effective modulus μ̄, not μ.  An earlier version divided by μ; the two
+# agree when tr(b̄ᵉ_trial) = 3, so the error was invisible at small strain and
+# with H = 0 (β₀ = 1), and grew with the hardening modulus and with
+# tr(b̄ᵉ_trial) - 3: 1.7e-5 relative in the symmetric part at an equivalent
+# plastic strain of 0.11 (one increment from the virgin state, E = 1e3,
+# ν = 0.3, σ_y = 20, H = 100) and 9.8e-2 at 0.63 (tr(b̄ᵉ_trial) - 3 = 3.6).
 #
-#            case            ‖A_fd - A‖   ‖sym(A_fd) - A‖   ‖asym(A_fd)‖
-#     elastic step             7.4e-10        7.4e-10          9.0e-11
-#     shear γ = 0.008          2.1e-04        1.2e-10          2.1e-04
-#     shear γ = 0.032          2.2e-04        4.9e-09          2.2e-04
-#     triaxial + shear         1.1e-04        4.5e-06          1.1e-04
+# Measured against a central-difference Jacobian of `pk1_stress` (h = 1e-6),
+# as ‖·‖ relative to the tangent norm, at the same material and increments:
 #
-# The discrepancy IS the antisymmetric part: the symmetric part is recovered to
-# FD accuracy, and the elastic branch is the exact Jacobian with nothing to
-# discard.  So Newton stays fast on steps that yield but is not fully
-# quadratic there, and a residual that stalls near 1e-4 relative is this, not a
-# bug.  Independently reproduced against Norma.jl's transcription of the same
-# BOX 9.1/9.2 algorithm, which agrees to every digit above.
-# ---------------------------------------------------------------------------
-
+#        H     eqps    ‖sym(A_fd) - A‖/‖A‖    ‖asym(A_fd)‖/‖A_fd‖
+#       100    0.11          3.6e-11               3.7e-03
+#       100    0.37          1.0e-10               4.7e-03
+#       100    0.63          1.4e-10               5.3e-03
+#       300    0.59          1.1e-10               3.8e-03
+#
+# The symmetric part is recovered to the accuracy of the differences and the
+# remaining discrepancy is the antisymmetric part; the elastic branch is the
+# exact Jacobian.  Newton therefore stays fast on steps that yield but is not
+# fully quadratic there.
 @inline function _sh_j2_tangent(
     props,
     F::Tensor{2,3,T,9},
@@ -222,7 +226,7 @@ end
         # Plastic correction (BOX 9.2, steps 2-3)
         β₀ = one(T) + K / (3μ̄)
         β₁ = 2μ̄ * Δγ / s_trial_norm
-        β₂ = (one(T) - one(T)/β₀) * T(2)/3 * s_trial_norm / μ * Δγ
+        β₂ = (one(T) - one(T)/β₀) * T(2)/3 * s_trial_norm / μ̄ * Δγ
         β₃ = one(T)/β₀ - β₁ + β₂
         β₄ = (one(T)/β₀ - β₁) * s_trial_norm / μ̄
 

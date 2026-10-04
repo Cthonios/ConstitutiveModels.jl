@@ -103,6 +103,7 @@ function test_finite_def_j2_cauchy_from_pk1()
 end
 
 function test_finite_def_j2_tangent_vs_fd()
+test_finite_def_j2_tangent_large_increment()
     # The analytic tangent must be the Jacobian of the same pk1_stress the
     # residual evaluates.  This also pins the argument ORDER: the method was
     # stranded with `(props, Δt, Z_old, Z_new, ...)` while the interface is
@@ -136,6 +137,45 @@ function test_finite_def_j2_tangent_vs_fd()
                                rtol = 1e-5, atol = 1e-3 * maximum(abs, P0))
             end
         end
+    end
+end
+
+function test_finite_def_j2_tangent_large_increment()
+    # BOX 9.2 returns the major-symmetric part of the Jacobian of the stress
+    # update.  At a large plastic increment with hardening, the coefficient β₂
+    # must use the effective shear modulus μ̄ = μ tr(b̄ᵉ_trial)/3; with μ in
+    # its place the symmetric part was off by 1e-2 at an equivalent plastic
+    # strain of 0.6, and exact at small strain, where μ̄ = μ.  The check: the
+    # symmetric part of the central-difference Jacobian equals the tangent,
+    # and what remains of the difference is the antisymmetric part.
+    model = FiniteDefJ2Plasticity()
+    ∇u = Tensor{2, 3, Float64, 9}((0.25, 0.05, -0.2, 0.3, -0.15, 0.1, -0.1, 0.2, 0.12))
+    for H in (0.7e9, 7.0e9)
+        inputs = Dict(
+            "density"           => 2700.0,
+            "Young's modulus"   => 70.0e9,
+            "Poisson's ratio"   => 0.36,
+            "yield stress"      => 250.0e6,
+            "hardening modulus" => H,
+        )
+        props = initialize_props(model, inputs)
+        Z = copy(initialize_state(model))
+        pk1_stress(model, props, initialize_state(model), Z, 0.0, ∇u, 0.0)
+        @test Z[10] > 0.25                      # one increment, well into the plastic range
+        A = material_tangent(model, props, initialize_state(model), copy(initialize_state(model)), 0.0, ∇u, 0.0)
+        h = 1.0e-6
+        Afd = Tensor{4, 3}((i, j, k, l) -> begin
+            δ = Tensor{2, 3}((a, b) -> (a == k && b == l) ? 1.0 : 0.0)
+            Pp = pk1_stress(model, props, initialize_state(model), copy(initialize_state(model)), 0.0, ∇u + h * δ, 0.0)
+            Pm = pk1_stress(model, props, initialize_state(model), copy(initialize_state(model)), 0.0, ∇u - h * δ, 0.0)
+            (Pp[i, j] - Pm[i, j]) / 2h
+        end)
+        Am = reshape(collect(A.data), 9, 9)
+        Af = reshape(collect(Afd.data), 9, 9)
+        sym_err  = norm((Af + Af') / 2 - Am) / norm(Am)
+        asym     = norm((Af - Af') / 2) / norm(Af)
+        @test sym_err < 1.0e-7
+        @test norm(Af - Am) / norm(Af) < asym + 1.0e-7
     end
 end
 
