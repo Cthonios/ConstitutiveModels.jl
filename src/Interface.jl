@@ -123,6 +123,25 @@ function material_tangent(
     ), ∇u)
 end
 
+"""
+    pk1_stress_and_material_tangent(model, props, Z_old, Z_new, Δt, ∇u, θ, args...)
+
+The first Piola–Kirchhoff stress and the material tangent at one state, as the
+pair `(P, A)`, with the internal variables written to `Z_new` as by
+`pk1_stress`.  The default calls `pk1_stress` and `material_tangent`.  A model
+whose tangent evaluates the stress on the way, such as the return map of a
+plasticity model, returns both from one evaluation, which halves the number of
+return maps of a caller that needs both.
+"""
+function pk1_stress_and_material_tangent(
+    model::AbstractConstitutiveModel,
+    props, Z_old, Z_new, Δt, ∇u, θ, args...
+)
+    P = pk1_stress(model, props, Z_old, Z_new, Δt, ∇u, θ, args...)
+    A = material_tangent(model, props, Z_old, Z_new, Δt, ∇u, θ, args...)
+    return P, A
+end
+
 function pk1_stress(
     model::AbstractHyperelasticModel,
     props, Z_old, Z_new, Δt, ∇u, θ, args...

@@ -307,14 +307,18 @@ end
     return P
 end
 
-@inline function _j2_tangent(props, Z_old, Z_new, ∇u, κ)
+# The stress and the tangent from one return map.
+@inline function _j2_stress_tangent(props, Z_old, Z_new, ∇u, κ)
     F = ∇u + one(∇u)
     W, P, state_new_vec, s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n =
         _sh_j2_stress(props, F, Z_old, κ)
     _store_state!(Z_new, state_new_vec)
-    return _sh_j2_tangent(props, F, Z_old, P,
-                           s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n, κ)
+    A = _sh_j2_tangent(props, F, Z_old, P,
+                       s_new, be_bar_tr, s_trial_norm, μ̄, Δγ, α_n, κ)
+    return P, A
 end
+
+@inline _j2_tangent(props, Z_old, Z_new, ∇u, κ) = _j2_stress_tangent(props, Z_old, Z_new, ∇u, κ)[2]
 
 function helmholtz_free_energy(
     ::FiniteDefJ2Plasticity,
@@ -338,6 +342,14 @@ function material_tangent(
     ∇u, θ
 )
     return _j2_tangent(props, Z_old, Z_new, ∇u, _j2_bulk_modulus(props, eltype(∇u)))
+end
+
+function pk1_stress_and_material_tangent(
+    ::FiniteDefJ2Plasticity,
+    props, Z_old, Z_new, Δt,
+    ∇u, θ
+)
+    return _j2_stress_tangent(props, Z_old, Z_new, ∇u, _j2_bulk_modulus(props, eltype(∇u)))
 end
 
 # ---------------------------------------------------------------------------

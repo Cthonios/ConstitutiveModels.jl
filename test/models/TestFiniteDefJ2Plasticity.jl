@@ -140,6 +140,36 @@ test_finite_def_j2_tangent_large_increment()
     end
 end
 
+function test_finite_def_j2_stress_and_tangent()
+    # pk1_stress_and_material_tangent returns, from one return map, the stress
+    # and the tangent of pk1_stress and material_tangent, and writes the same
+    # internal variables, in the elastic range and in a plastic increment.
+    model = FiniteDefJ2Plasticity()
+    inputs = Dict("density" => 2700.0, "Young's modulus" => 70.0e9, "Poisson's ratio" => 0.36,
+                  "yield stress" => 250.0e6, "hardening modulus" => 0.7e9)
+    props = initialize_props(model, inputs)
+    for ∇u in (Tensor{2, 3, Float64, 9}((1e-4, 0.0, 0.0, 0.0, -3e-5, 0.0, 0.0, 0.0, -3e-5)),
+               Tensor{2, 3, Float64, 9}((0.25, 0.05, -0.2, 0.3, -0.15, 0.1, -0.1, 0.2, 0.12)))
+        Z0 = initialize_state(model)
+        Z1 = copy(Z0); Z2 = copy(Z0); Z3 = copy(Z0)
+        P  = pk1_stress(model, props, Z0, Z1, 0.0, ∇u, 0.0)
+        A  = material_tangent(model, props, Z0, Z2, 0.0, ∇u, 0.0)
+        Pc, Ac = pk1_stress_and_material_tangent(model, props, Z0, Z3, 0.0, ∇u, 0.0)
+        @test Pc == P
+        @test Ac == A
+        @test Z3 == Z1
+    end
+    # The default for any other model: the two functions.
+    nh = Hyperelastic(NeoHookean())
+    props_nh = initialize_props(nh, Dict("density" => 1.0, "Young's modulus" => 1.0,
+                                         "Poisson's ratio" => 0.3))
+    ∇u = Tensor{2, 3, Float64, 9}((0.1, 0.02, 0.0, -0.03, 0.05, 0.01, 0.0, 0.02, -0.04))
+    Z = initialize_state(nh)
+    Pc, Ac = pk1_stress_and_material_tangent(nh, props_nh, Z, copy(Z), 0.0, ∇u, 0.0)
+    @test Pc == pk1_stress(nh, props_nh, Z, copy(Z), 0.0, ∇u, 0.0)
+    @test Ac == material_tangent(nh, props_nh, Z, copy(Z), 0.0, ∇u, 0.0)
+end
+
 function test_finite_def_j2_tangent_large_increment()
     # BOX 9.2 returns the major-symmetric part of the Jacobian of the stress
     # update.  At a large plastic increment with hardening, the coefficient β₂
@@ -256,3 +286,4 @@ test_finite_def_j2_uniaxial_strain()
 test_finite_def_j2_cauchy_from_pk1()
 test_finite_def_j2_tangent_vs_fd()
 test_finite_def_j2_volumetric_isochoric_split()
+test_finite_def_j2_stress_and_tangent()
