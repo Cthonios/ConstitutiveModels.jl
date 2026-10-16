@@ -210,11 +210,11 @@ function test_finite_def_j2_tangent_large_increment()
 end
 
 function test_finite_def_j2_volumetric_isochoric_split()
-    # The model splits as W = κ/2 (J-1)² + W_iso(b̄ᵉ) with p = κ(J-1).  The
+    # The model splits as W = κ/2 (log J)² + W_iso(b̄ᵉ) with τ_vol = κ log J I.  The
     # isochoric functions must return W_iso, P_iso = s F⁻ᵀ and its tangent,
     # update the state exactly as the full functions do, and be independent
     # of J.  Each full quantity must equal its isochoric part plus the
-    # volumetric part κ(J-1) J F⁻ᵀ (energy: κ/2 (J-1)²).
+    # volumetric part κ log J F⁻ᵀ (energy: κ/2 (log J)²).
     model = FiniteDefJ2Plasticity()
     inputs = Dict(
         "density"           => 2700.0,
@@ -230,8 +230,8 @@ function test_finite_def_j2_volumetric_isochoric_split()
     κ = bulk_modulus(model, props)
     @test volumetric_strain(model, 1.0) == 0.0
     @test volumetric_strain_derivative(model, 1.0) == 1.0
-    @test volumetric_strain_second_derivative(model, 1.3) == 0.0
-    @test volumetric_strain(model, 1.3) ≈ 0.3
+    @test volumetric_strain_second_derivative(model, 1.3) ≈ -1 / 1.3^2
+    @test volumetric_strain(model, 1.3) ≈ log(1.3)
 
     # a distorted state with rotation, shear and dilatation; γ = 0.002 is
     # elastic, γ = 0.05 yields
@@ -244,13 +244,13 @@ function test_finite_def_j2_volumetric_isochoric_split()
         Za = copy(Z0); Zb = copy(Z0)
         W  = helmholtz_free_energy(model, props, Z0, Za, 0.0, ∇u, 0.0)
         Wi = isochoric_helmholtz_free_energy(model, props, Z0, Zb, 0.0, ∇u, 0.0)
-        @test W ≈ Wi + κ / 2 * (J - 1)^2
+        @test W ≈ Wi + κ / 2 * log(J)^2
         @test Za == Zb
 
         Za = copy(Z0); Zb = copy(Z0)
         P  = pk1_stress(model, props, Z0, Za, 0.0, ∇u, 0.0)
         Pi = isochoric_pk1_stress(model, props, Z0, Zb, 0.0, ∇u, 0.0)
-        Pv = κ * (J - 1) * J * inv(F)'
+        Pv = κ * log(J) * inv(F)'
         @test P ≈ Pi + Pv
         @test Za == Zb
         @test (γ > 1e-2) == (Za[10] > 0)      # the second state yields
@@ -268,7 +268,7 @@ function test_finite_def_j2_volumetric_isochoric_split()
         Za = copy(Z0); Zb = copy(Z0)
         A  = material_tangent(model, props, Z0, Za, 0.0, ∇u, 0.0)
         Ai = isochoric_material_tangent(model, props, Z0, Zb, 0.0, ∇u, 0.0)
-        Pvol(g) = (Fg = g + one(g); Jg = det(Fg); κ * (Jg - 1) * Jg * inv(Fg)')
+        Pvol(g) = (Fg = g + one(g); Jg = det(Fg); κ * log(Jg) * inv(Fg)')
         h = 1.0e-6
         for k in 1:3, l in 1:3
             E = Tensor{2, 3}((i, j) -> (i == k && j == l) ? h : 0.0)

@@ -133,15 +133,14 @@ end
         Fp_new         = inv(Fe_new) ⋅ F
     end
 
-    # Kirchhoff stress: τ = J p I + s,  p = κ(J-1)
-    p = κ * (J - one(T))
-    τ = J * p * I2 + s_new
+    # Kirchhoff stress: τ = κ log J I + s, the volumetric part from W_vol = κ/2 (log J)²
+    τ = κ * log(J) * I2 + s_new
 
     # PK1: P = τ · F⁻ᵀ
     P = Tensor{2,3,T,9}(τ) ⋅ inv(F)'
 
     # Energy
-    W = κ / 2 * (J - 1)^2 + μ / 2 * (tr(be_bar_new) - T(3))
+    W = κ / 2 * log(J)^2 + μ / 2 * (tr(be_bar_new) - T(3))
 
     fp = Fp_new.data
     state_new = SVector{10,T}(
@@ -226,9 +225,9 @@ end
     I2 = one(SymmetricTensor{2, 3, T, 6})
     I4_sym = one(SymmetricTensor{4, 3, T, 36})
 
-    # Volumetric spatial tangent
-    coeff_1x1 = κ * J * (2*J - one(T))
-    coeff_I   = 2 * κ * J * (J - one(T))
+    # Volumetric spatial tangent of τ_vol = g(J) I, g = κ log J: J g'(J) I⊗I − 2 g(J) I4
+    coeff_1x1 = κ
+    coeff_I   = 2 * κ * log(J)
     c_vol = coeff_1x1 * (I2 ⊗ I2) - coeff_I * I4_sym
 
     # Unit normal
@@ -355,15 +354,15 @@ end
 # ---------------------------------------------------------------------------
 # Volumetric-isochoric split (see Interface.jl)
 #
-#   W = κ/2 (J - 1)² + μ/2 (tr b̄ᵉ - 3),   θ(J) = J - 1,   θ'(J) = 1,
+#   W = κ/2 (log J)² + μ/2 (tr b̄ᵉ - 3),   θ(J) = log J,   θ'(J) = 1/J,
 #
 # the split of BOX 9.1: det b̄ᵉ = 1 makes the isochoric term independent of J.
 # ---------------------------------------------------------------------------
 
 has_volumetric_isochoric_split(::FiniteDefJ2Plasticity) = true
-volumetric_strain(::FiniteDefJ2Plasticity, J) = J - one(J)
-volumetric_strain_derivative(::FiniteDefJ2Plasticity, J) = one(J)
-volumetric_strain_second_derivative(::FiniteDefJ2Plasticity, J) = zero(J)
+volumetric_strain(::FiniteDefJ2Plasticity, J) = log(J)
+volumetric_strain_derivative(::FiniteDefJ2Plasticity, J) = one(J) / J
+volumetric_strain_second_derivative(::FiniteDefJ2Plasticity, J) = -one(J) / (J * J)
 bulk_modulus(::FiniteDefJ2Plasticity, props) = _j2_bulk_modulus(props, eltype(props))
 
 function isochoric_helmholtz_free_energy(
