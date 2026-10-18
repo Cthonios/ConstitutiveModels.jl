@@ -8,7 +8,7 @@ struct ThermoHyperelastic{
     hyperelasticity::C
 end
 
-function initialize_props(model::ThermoHyperelastic, inputs)
+function initialize_props(model::ThermoHyperelastic, inputs::PropertyInputs{T}) where T <: Number
     return [
         get_property(inputs, "density"),
         initialize_props(model.heat_capacity, inputs)...,

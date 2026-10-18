@@ -72,13 +72,13 @@ end
 function simulate_material_point(
     mat_func::Function,
     model::AbstractHyperelasticModel,
-    props::Dict{String},
+    props::PropertyInputs{T},
     motion::AbstractMotion,
     time_end::Number,
     temp_func = t -> 0.0,
     temp_grad_func = t -> zero(Vec{3, Float64});
     num_steps::Int = 101
-)
+) where T <: Number
     # TODO allow for time history that is non-uniform
     Δt = time_end / num_steps
 

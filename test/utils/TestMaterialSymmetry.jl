@@ -1,5 +1,5 @@
 function test_isotropy()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "thermal conductivity" => 1e-3
     )
     symmetry = Isotropy{2}()
@@ -8,7 +8,7 @@ function test_isotropy()
     A = as_tensor(symmetry, props)
     @test A ≈ 1e-3 * one(SymmetricTensor{2, 3, Float64, 6})
 
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Lamé's first constant" => 5.0,
         "shear modulus"         => 12.0
     )

@@ -13,7 +13,7 @@ end
 
 function test_bad_fouriers_law_symmetry()
     model = FouriersLaw(MyBadSymmetry{2}())
-    props = Dict(
+    props = PropertyInputs(
         "thermal conductivity" => 1e-4
     )
     @test_throws AssertionError initialize_props(model, props)
@@ -21,7 +21,7 @@ end
 
 function test_isotropic_fouriers_law_no_deformation()
     model = FouriersLaw(Isotropy{2}())
-    props = Dict(
+    props = PropertyInputs(
         "thermal conductivity" => 1e-4
     )
     props = initialize_props(model, props)

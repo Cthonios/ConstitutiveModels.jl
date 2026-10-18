@@ -4,7 +4,7 @@ struct Hyperelastic{
     model::M
 end
 
-function initialize_props(model::Hyperelastic, inputs::Dict{String})
+function initialize_props(model::Hyperelastic, inputs::PropertyInputs{T}) where T <: Number
     return [get_property(inputs, "density"), initialize_props(model.model, inputs)...]
 end
 

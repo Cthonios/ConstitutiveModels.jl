@@ -7,7 +7,7 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function initialize_props(::LinearElasticity, inputs::Dict{String})
+function initialize_props(::LinearElasticity, inputs::PropertyInputs{T}) where T <: Number
     elastic_props = ElasticConstants(inputs)
     return [elastic_props.λ, elastic_props.μ]
 end

@@ -52,7 +52,7 @@ function test_linear_elastic_model_uniaxial_stress(model, inputs)
 end
 
 function test_linear_elastic_model()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "density"         => 1e3,
         "Young's modulus" => 70.0e9,
         "Poisson's ratio" => 0.3

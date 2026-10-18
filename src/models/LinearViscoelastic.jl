@@ -12,7 +12,7 @@ function LinearViscoelastic(::Val{NP}) where NP
     )
 end
 
-function initialize_props(model::LinearViscoelastic, inputs::Dict{String})
+function initialize_props(model::LinearViscoelastic, inputs::PropertyInputs{T}) where T <: Number
     el = initialize_props(model.elastic_model, inputs)
     gs = inputs["prony shear moduli"]
     τs = inputs["relaxation times"]

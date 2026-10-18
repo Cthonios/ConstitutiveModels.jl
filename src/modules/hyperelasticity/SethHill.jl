@@ -23,7 +23,7 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function initialize_props(::SethHill, inputs::Dict{String})
+function initialize_props(::SethHill, inputs::PropertyInputs{T}) where T <: Number
     ec = ElasticConstants(inputs)
     m  = get_property(inputs, "m", 1.0)
     n  = get_property(inputs, "n", 1.0)

@@ -1,15 +1,6 @@
 abstract type AbstractHeatConduction <: AbstractConstitutiveModule end
 
 # should we rename below to something like push-forward or pull-back?
-# TODO check against Gurtin-Fried-Anand
-# non-linear kinematics
-# function map_temperature_gradient(∇u::Tensor{2, 3, T, 9}, ∇θ) where T <: Number
-#     F = ∇u + one(∇u)
-#     J = det(F)
-#     C_inv = inv(tdot(F))
-#     return J * dot(C_inv, ∇θ)
-# end
-
 function _map_heat_flux(∇u::Tensor{2, 3, T, 9}, ∇θ) where T <: Number
     F = ∇u + one(∇u)
     J = det(F)
@@ -44,6 +35,14 @@ struct FouriersLaw{S <: AbstractMaterialSymmetry{2}} <: AbstractHeatConduction
 
     function FouriersLaw(symmetry = Isotropy{2}())
         new{typeof(symmetry)}(symmetry)
+    end
+end
+
+function initialize_props(model::FouriersLaw, inputs::PropertyInputs{T}) where T <: Number
+    if isa(model.symmetry, Isotropy{2})
+        return [get_property(inputs, "thermal conductivity")]
+    else
+        @assert false "Currently unsupported material symmetry type $(model.symmetry)"
     end
 end
 

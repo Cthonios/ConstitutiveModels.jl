@@ -8,7 +8,7 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function initialize_props(::NeoHookean, inputs::Dict{String})
+function initialize_props(::NeoHookean, inputs::PropertyInputs{T}) where T <: Number
     elastic_props = ElasticConstants(inputs)
     return [elastic_props.κ, elastic_props.μ]
 end

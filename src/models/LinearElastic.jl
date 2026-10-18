@@ -6,7 +6,7 @@ function LinearElastic()
     return LinearElastic(LinearElasticity())
 end
 
-function initialize_props(model::LinearElastic, inputs::Dict{String})
+function initialize_props(model::LinearElastic, inputs::PropertyInputs{T}) where T <: Number
     return [get_property(inputs, "density"), initialize_props(model.model, inputs)...]
 end
 

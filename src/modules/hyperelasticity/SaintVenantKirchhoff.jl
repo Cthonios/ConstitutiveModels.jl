@@ -24,7 +24,7 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function initialize_props(::SaintVenantKirchhoff, inputs::Dict{String})
+function initialize_props(::SaintVenantKirchhoff, inputs::PropertyInputs{T}) where T <: Number
     ec = ElasticConstants(inputs)
     return [ec.λ, ec.μ]
 end

@@ -1,21 +1,19 @@
 function test_bad_property()
     inputs = PropertyInputs("bad property" => 1.0)
-    @test_throws CM.PropertyNotFoundError CM.get_property(inputs, "Young's modulus", Float64)
+    @test_throws CM.PropertyNotFoundError CM.get_property(inputs, "Young's modulus")
 end
 
 # function test_bad_
 
 function test_default_property()
     inputs = Dict{String, Any}()
-    val = CM.get_property(inputs, "Young's modulus", 70e9)
-    @test val ≈ 70e9
     inputs = PropertyInputs()
-    val = CM.get_property(inputs, "Young's Modulus", Float64, 70e9)
+    val = CM.get_property(inputs, "Young's Modulus", 70e9)
     @test val ≈ 70e9
 end
 
 function test_get_property()
-    inputs = Dict{String, Any}(
+    inputs = PropertyInputs(
         "Young's modulus"                  => 1.0,
         "Poisson's ratio"                  => 0.3,
         "coefficient of thermal expansion" => 0.001,
@@ -25,15 +23,10 @@ function test_get_property()
     )
     val = CM.get_property(inputs, "reference temperature")
     @test val ≈ 60.0
-
-    inputs = PropertyInputs(inputs)
-    @show inputs
-    val = CM.get_property(inputs, "reference temperature", Float64)
-    @test val ≈ 60.0
 end
 
 function test_get_property_with_distribution()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "Young's modulus"                  => 1.0,
         "Poisson's ratio"                  => 0.3,
         "coefficient of thermal expansion" => 0.001,

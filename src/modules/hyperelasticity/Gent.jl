@@ -7,9 +7,11 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function initialize_props(::Gent, inputs::Dict{String})
+function initialize_props(::Gent, inputs::PropertyInputs{T}) where T <: Number
     elastic_props = ElasticConstants(inputs)
-    Jm = get_property(inputs, "Jm")
+    # Jm = get_property(inputs, "Jm")
+    # Jm = T(2.5)
+    Jm = inputs["Jm"]::T
     return [elastic_props.κ, elastic_props.μ, Jm]
 end
 

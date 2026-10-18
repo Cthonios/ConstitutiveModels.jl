@@ -4,7 +4,7 @@ struct Hypoelastic{
     rate::H
 end
 
-function initialize_props(::Hypoelastic, inputs::Dict{String})
+function initialize_props(::Hypoelastic, inputs::PropertyInputs{T}) where T <: Number
     el = ElasticConstants(inputs)
     return [get_property(inputs, "density"), el.λ, el.μ]
 end

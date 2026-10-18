@@ -24,7 +24,7 @@ function LinearThermoelastic(
     )
 end
 
-function initialize_props(::LinearThermoelastic, inputs::Dict{String})
+function initialize_props(::LinearThermoelastic, inputs::PropertyInputs{T}) where T <: Number
     # elastic_props = ElasticConstants(inputs)
     # α = inputs["coefficient of thermal expansion"]
     # θ_0 = inputs["reference temperature"]

@@ -5,8 +5,9 @@ struct LinearThermalExpansion{S <: AbstractMaterialSymmetry} <: AbstractThermalE
     symmetry::S
 end
 
-function initialize_props(model::LinearThermalExpansion, inputs::Dict{String})
-    θ_0 = inputs["reference temperature"]
+function initialize_props(model::LinearThermalExpansion{S}, inputs::PropertyInputs{T}) where {S, T <: Number}
+    θ_0 = get_property(inputs, "reference temperature")
+
     # kind of hacky below for now but works
     if isa(model.symmetry, Isotropy{2})
         elastic_props = ElasticConstants(inputs)

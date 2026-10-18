@@ -139,7 +139,7 @@ function FeFv()
     return FeFv(Hencky())
 end
 
-function initialize_props(model::FeFv, inputs::Dict{String})
+function initialize_props(model::FeFv, inputs::PropertyInputs{T}) where T <: Number
     return [
         get_property(inputs, "density"),
         initialize_props(model.model_eq, inputs)...,

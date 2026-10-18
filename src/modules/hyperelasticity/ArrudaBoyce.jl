@@ -1,7 +1,7 @@
 struct ArrudaBoyce <: AbstractHyperelasticity
 end
 
-function initialize_props(::ArrudaBoyce, inputs::Dict{String})
+function initialize_props(::ArrudaBoyce, inputs::PropertyInputs{T}) where T <: Number
     elastic_props = ElasticConstants(inputs)
     n = get_property(inputs, "n")
     return [elastic_props.κ, elastic_props.μ, sqrt(n)]

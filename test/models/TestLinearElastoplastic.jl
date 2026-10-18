@@ -42,7 +42,7 @@ function test_linear_elasto_plasticity()
     ν = 0.3
     σ_y = 200.e6
     H = 180.e6
-    inputs = Dict(
+    inputs = PropertyInputs(
         "density"           => 1e3,
         "Young's modulus"   => E,
         "Poisson's ratio"   => ν,

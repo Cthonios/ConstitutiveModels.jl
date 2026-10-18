@@ -3,7 +3,7 @@ struct Thermal{C, F} <: AbstractHyperelasticModel
     heat_flux_model::F
 end
 
-function initialize_props(model::Thermal, inputs::Dict{String})
+function initialize_props(model::Thermal, inputs::PropertyInputs{T}) where T <: Number
     return [
         get_property(inputs, "density"),
         initialize_props(model.heat_capacity_model, inputs)...,

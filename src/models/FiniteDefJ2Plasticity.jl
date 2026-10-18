@@ -29,7 +29,7 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function initialize_props(::FiniteDefJ2Plasticity, inputs::Dict{String})
+function initialize_props(::FiniteDefJ2Plasticity, inputs::PropertyInputs{T}) where T <: Number
     ρ   = get_property(inputs, "density")
     ec  = ElasticConstants(inputs)
     σ_y = get_property(inputs, "yield stress", 0.0)

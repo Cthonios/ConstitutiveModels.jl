@@ -7,7 +7,7 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function initialize_props(::Hencky, inputs::Dict{String})
+function initialize_props(::Hencky, inputs::PropertyInputs{T}) where T <: Number
     elastic_props = ElasticConstants(inputs)
     return [elastic_props.κ, elastic_props.μ]
 end

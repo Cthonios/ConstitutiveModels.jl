@@ -72,7 +72,7 @@ end
 # end
 
 function test_arruda_boyce()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,
@@ -134,7 +134,7 @@ function test_gent_uniaxial_strain(model, inputs)
 end
 
 function test_gent()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "density"         => 1e3,
         "Young's modulus" => 1.0e6,
         "Poisson's ratio" => 0.3,
@@ -222,7 +222,7 @@ function test_hencky_uniaxial_strain(model, inputs)
 end
 
 function test_hencky()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "density"         => 1e3,
         "Young's modulus" => 70.0e3,
         "Poisson's ratio" => 0.3
@@ -292,7 +292,7 @@ function test_linear_elastic_uniaxial_stress(model, inputs)
 end
 
 function test_linear_elastic()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "density"         => 1e3,
         "Young's modulus" => 70.0e9,
         "Poisson's ratio" => 0.3
@@ -380,7 +380,7 @@ function test_mooney_rivlin_uniaxial_strain(model, inputs)
 end
 
 function test_mooney_rivlin()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,
@@ -516,7 +516,7 @@ function test_neohookean_precision_is_preserved(model, inputs)
 end
 
 function test_neohookean()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3
@@ -588,7 +588,7 @@ function test_saint_venant_kirchoff_uniaxial_strain(model, inputs)
 end
 
 function test_saint_venant_kirchoff()
-    inputs = Dict(
+    inputs = PropertyInputs(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3
@@ -660,28 +660,28 @@ function test_seth_hill_uniaxial_strain(model, inputs)
 end
 
 function test_seth_hill()
-    inputs_neohookean = Dict(
+    inputs_neohookean = PropertyInputs(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,
         "m"               => 1,
         "n"               => 1
     )
-    inputs_1_2 = Dict(
+    inputs_1_2 = PropertyInputs(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,
         "m"               => 1,
         "n"               => 2
     )
-    inputs_2_1 = Dict(
+    inputs_2_1 = PropertyInputs(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,
         "m"               => 2,
         "n"               => 1
     )
-    inputs_2_2 = Dict(
+    inputs_2_2 = PropertyInputs(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,

@@ -117,7 +117,7 @@ function property_not_found_error(inputs, key)
     throw(PropertyNotFoundError(inputs, key))
 end
 
-function get_property(inputs::Dict{String}, key::String, default = nothing)
+function get_property_old(inputs::Dict{String}, key::String, default = nothing)
     val = get(inputs, key, default)
     if val === nothing
         property_not_found_error(inputs, key)
@@ -141,35 +141,68 @@ function get_property(inputs::Dict{String}, key::String, default = nothing)
     end
 end
 
-function get_property(inputs::PropertyInputs{T}, key::String, type::Type{String}, default = nothing) where T <: Number
-    if default === nothing
-        if !haskey(inputs, key)
-            property_not_found_error(inputs, key)
-        end
-        return inputs[key]::String
-    else
-        return get(inputs, key, default)
-    end
-end
-
-function get_property(inputs::PropertyInputs{T}, key::String, type::Type{T}, default = nothing) where T <: Number
-    if default === nothing
-        if !haskey(inputs, key)
-            property_not_found_error(inputs, key)
-        end
-        return inputs[key]::T
-    else
-        return get(inputs, key, default)
-    end
-end
-
-function get_property(inputs::PropertyInputs{T}, key::String, type::Type{<:Dict{String}}) where T <: Number
-    # val = get(inputs, key, default)
-    # if val === nothing
-    #     property_not_found_error(inputs, key)
+function get_property(inputs::PropertyInputs{T}, key::String, default = nothing) where T <: Number
+    # if default === nothing
+    #     if !haskey(inputs, key)
+    #         property_not_found_error(inputs, key)
+    #     end
     # else
-    #     return val
+    #     if !haskey(inputs, key)
+    #         return default
+    #     end
     # end
-    # return val
-    return inputs.data[key]
+
+    val = inputs[key]
+    if val isa Dict{String, Any}
+        return val
+    # elseif val isa Dict{String, T}
+    #     if haskey(val, "mean") && haskey(val, "variance")
+    #         dist = Normal(val["mean"]::T, val["variance"]::T)
+    #         return rand(dist)::T
+    #     else
+    #         bad_nested_property_input(val, key)
+    #     end
+    # elseif val isa String
+    #     return val::String
+    # elseif val isa Integer
+    #     return convert(T, val)
+    # elseif val isa AbstractDict
+    #     return val
+    # elseif val isa String
+    #     return val
+    # elseif val isa String
+    #     # hooks for reading from exodus maybe?
+    #     println(Core.stdout, "Got value $val")
+    #     @assert false
+    elseif val isa Number
+        return val::T
+    else
+        @assert false "Unsupported type encountered in get_property."
+    end
 end
+
+# function get_property(inputs::PropertyInputs{T}, key::String, type::Type{String}, default = nothing) where T <: Number
+#     if default === nothing
+#         if !haskey(inputs, key)
+#             property_not_found_error(inputs, key)
+#         end
+#         return inputs[key]::String
+#     else
+#         return get(inputs, key, default)
+#     end
+# end
+
+# function get_property(inputs::PropertyInputs{T}, key::String, type::Type{T}, default = nothing) where T <: Number
+#     if default === nothing
+#         if !haskey(inputs, key)
+#             property_not_found_error(inputs, key)
+#         end
+#         return inputs[key]::T
+#     else
+#         return get(inputs, key, default)
+#     end
+# end
+
+# function get_property(inputs::PropertyInputs{T}, key::String, type::Type{<:Dict{String}}) where T <: Number
+#     return inputs.data[key]
+# end

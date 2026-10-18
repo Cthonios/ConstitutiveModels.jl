@@ -10,7 +10,7 @@ function LinearElastoplastic(yield_surface::AbstractYieldSurface)
     )
 end
 
-function initialize_props(model::LinearElastoplastic, inputs::Dict{String})
+function initialize_props(model::LinearElastoplastic, inputs::PropertyInputs{T}) where T <: Number
     return [
         get_property(inputs, "density"),
         initialize_props(model.elastic_model, inputs)...,
