@@ -45,7 +45,7 @@ function helmholtz_free_energy(::MooneyRivlin, props, ∇u, θ)
     I2_bar = J_m_23 * J_m_23 * I2
 
     # energies
-    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - log(J))
+    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - safe_log(J))
     ψ_dev = C1 * (I1_bar - 3.0) + C2 * (I2_bar - 3.0)
     return ψ_vol + ψ_dev
 end

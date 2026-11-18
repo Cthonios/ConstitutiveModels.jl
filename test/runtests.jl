@@ -74,6 +74,9 @@ end
     @testset "Properties" begin
         include("utils/TestProperties.jl")
     end
+    @testset "Safe log" begin
+        include("utils/TestSafeLog.jl")
+    end
     @testset "State variables" begin
         include("utils/TestStateVariables.jl")
     end

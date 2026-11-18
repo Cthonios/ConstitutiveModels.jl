@@ -42,8 +42,8 @@ function helmholtz_free_energy(::ArrudaBoyce, props, ∇u, θ)
     )
 
     # constitutive
-    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - log(J))
-    ψ_dev = μ * sqrt_n * (β * λ_chain - sqrt_n * log(sinh(β) / β))
+    ψ_vol = 0.5 * κ * (0.5 * (J^2 - 1) - safe_log(J))
+    ψ_dev = μ * sqrt_n * (β * λ_chain - sqrt_n * safe_log(sinh(β) / β))
     ψ = ψ_vol + ψ_dev
     return ψ
 end

@@ -37,8 +37,8 @@ function helmholtz_free_energy(::Gent, props, ∇u, θ)
     I_1_bar = tr(J_m_23 * tdot(F))
 
     # constitutive
-    ψ_vol = 0.5 * κ * (0.5 * (J * J - 1) - log(J))
-    ψ_dev = -μ * Jm / 2. * log(1. - (I_1_bar - 3.) / Jm)
+    ψ_vol = 0.5 * κ * (0.5 * (J * J - 1) - safe_log(J))
+    ψ_dev = -μ * Jm / 2. * safe_log(1. - (I_1_bar - 3.) / Jm)
     ψ     = ψ_vol + ψ_dev
     return ψ
 end

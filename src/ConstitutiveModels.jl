@@ -92,6 +92,7 @@ include("utils/ElasticConstants.jl")
 include("utils/Kinematics.jl")
 include("utils/MaterialSymmetry.jl")
 include("utils/Properties.jl")
+include("utils/SafeLog.jl")
 include("utils/StateVariables.jl")
 include("utils/TensorUtils.jl")
 

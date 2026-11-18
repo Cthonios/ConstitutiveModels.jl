@@ -37,7 +37,7 @@ function helmholtz_free_energy(::NeoHookean, props, ∇u, θ)
     I_1_bar = tr(J_m_23 * tdot(F))
 
     # constitutive
-    ψ_vol = 0.5 * κ * (0.5 * (J * J - 1) - log(J))
+    ψ_vol = 0.5 * κ * (0.5 * (J * J - 1) - safe_log(J))
     ψ_dev = 0.5 * μ * (I_1_bar - 3.)
     ψ     = ψ_vol + ψ_dev
     return ψ
