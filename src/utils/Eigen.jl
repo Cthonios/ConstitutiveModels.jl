@@ -347,7 +347,7 @@ end
   if _is_identity(A)
       return zero(A)
   else
-      return _matrix_function(log, A)
+      return _matrix_function(safe_log, A)
   end
 end
 

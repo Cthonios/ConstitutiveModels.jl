@@ -134,13 +134,13 @@ end
     end
 
     # Kirchhoff stress: τ = κ log J I + s, the volumetric part from W_vol = κ/2 (log J)²
-    τ = κ * log(J) * I2 + s_new
+    τ = κ * safe_log(J) * I2 + s_new
 
     # PK1: P = τ · F⁻ᵀ
     P = Tensor{2,3,T,9}(τ) ⋅ inv(F)'
 
     # Energy
-    W = κ / 2 * log(J)^2 + μ / 2 * (tr(be_bar_new) - T(3))
+    W = κ / 2 * safe_log(J)^2 + μ / 2 * (tr(be_bar_new) - T(3))
 
     fp = Fp_new.data
     state_new = SVector{10,T}(
@@ -227,7 +227,7 @@ end
 
     # Volumetric spatial tangent of τ_vol = g(J) I, g = κ log J: J g'(J) I⊗I − 2 g(J) I4
     coeff_1x1 = κ
-    coeff_I   = 2 * κ * log(J)
+    coeff_I   = 2 * κ * safe_log(J)
     c_vol = coeff_1x1 * (I2 ⊗ I2) - coeff_I * I4_sym
 
     # Unit normal
@@ -360,7 +360,7 @@ end
 # ---------------------------------------------------------------------------
 
 has_volumetric_isochoric_split(::FiniteDefJ2Plasticity) = true
-volumetric_strain(::FiniteDefJ2Plasticity, J) = log(J)
+volumetric_strain(::FiniteDefJ2Plasticity, J) = safe_log(J)
 volumetric_strain_derivative(::FiniteDefJ2Plasticity, J) = one(J) / J
 volumetric_strain_second_derivative(::FiniteDefJ2Plasticity, J) = -one(J) / (J * J)
 bulk_modulus(::FiniteDefJ2Plasticity, props) = _j2_bulk_modulus(props, eltype(props))
