@@ -9,7 +9,7 @@ $(TYPEDSIGNATURES)
 """
 function initialize_props(::Gent, inputs::Dict{String})
     elastic_props = ElasticConstants(inputs)
-    Jm = get_property(inputs, "Jm")
+    Jm = get_real_property(inputs, "Jm")
     return [elastic_props.κ, elastic_props.μ, Jm]
 end
 

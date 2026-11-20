@@ -3,7 +3,7 @@ end
 
 function initialize_props(::ArrudaBoyce, inputs::Dict{String})
     elastic_props = ElasticConstants(inputs)
-    n = get_property(inputs, "n")
+    n = get_real_property(inputs, "n")
     return [elastic_props.κ, elastic_props.μ, sqrt(n)]
 end
 

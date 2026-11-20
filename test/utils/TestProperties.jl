@@ -1,13 +1,13 @@
 function test_bad_property()
     inputs = Dict("bad property" => 1.0)
-    @test_throws CM.PropertyNotFoundError CM.get_property(inputs, "Young's modulus")
+    @test_throws CM.PropertyNotFoundError CM.get_complex_property(inputs, "Young's modulus")
+    @test_throws CM.PropertyNotFoundError CM.get_real_property(inputs, "Young's modulus")
+    @test_throws CM.PropertyNotFoundError CM.get_string_property(inputs, "Young's modulus")
 end
-
-# function test_bad_
 
 function test_default_property()
     inputs = Dict("bad property" => 1.0)
-    val = CM.get_property(inputs, "Young's modulus", 70e9)
+    val = CM.get_real_property(inputs, "Young's modulus", 70e9)
     @test val ≈ 70e9
 end
 
@@ -20,7 +20,7 @@ function test_get_property()
         "specific heat capacity"           => 1.0e-3,
         "thermal conductivity"             => 1.0e-4
     )
-    val = CM.get_property(inputs, "reference temperature")
+    val = CM.get_real_property(inputs, "reference temperature")
     @test val ≈ 60.0
 end
 
@@ -36,7 +36,7 @@ function test_get_property_with_distribution()
         "specific heat capacity"           => 1.0e-3,
         "thermal conductivity"             => 1.0e-4
     )
-    val = CM.get_property(inputs, "reference temperature")
+    val = CM.get_real_property(inputs, "reference temperature")
     @test val != 60.0
 end
 

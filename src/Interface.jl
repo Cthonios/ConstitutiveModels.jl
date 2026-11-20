@@ -27,7 +27,7 @@ with no defaults. Supports sampling.
 """
 function initialize_props(c::AbstractConstitutive, inputs::Dict{String})
     prop_names = property_names(c)
-    return map(x -> get_property(inputs, x), prop_names)
+    return map(x -> get_real_property(inputs, x), prop_names)
 end
 
 """

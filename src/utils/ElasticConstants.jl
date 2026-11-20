@@ -46,25 +46,25 @@ $(TYPEDSIGNATURES)
 """
 function ElasticConstants(params::Dict{String})
     if haskey(params, "Young's modulus") == true
-        E = get_property(params, "Young's modulus")
+        E = get_real_property(params, "Young's modulus")
         if haskey(params, "Poisson's ratio") == true
-            ν = get_property(params, "Poisson's ratio")
+            ν = get_real_property(params, "Poisson's ratio")
             κ = E / 3(1 - 2ν)
             λ = E * ν / (1 + ν) / (1 - 2ν)
             μ = E / 2(1 + ν)
         elseif haskey(params, "bulk modulus") == true
-            κ = get_property(params, "bulk modulus")
+            κ = get_real_property(params, "bulk modulus")
             ν = (3κ - E) / 6κ
             λ = (3κ * (3κ - E)) / (9κ - E)
             μ = 3κ * E / (9κ - E)
         elseif haskey(params, "Lamé's first constant") == true
-            λ = get_property(params, "Lamé's first constant")
+            λ = get_real_property(params, "Lamé's first constant")
             R = sqrt(E^2 + 9λ^2 + 2E * λ)
             ν = 2λ / (E + λ + R)
             κ = (E + 3λ + R) / 6
             μ = (E - 3λ + R) / 4
         elseif haskey(params, "shear modulus") == true
-            μ = get_property(params, "shear modulus")
+            μ = get_real_property(params, "shear modulus")
             ν = E / 2μ - 1
             κ = E * μ / 3(3μ - E)
             λ = μ * (E - 2μ) / (3μ - E)
@@ -72,19 +72,19 @@ function ElasticConstants(params::Dict{String})
             elastic_constants_error("Two elastic constants are required but only elastic modulus found")
         end
     elseif haskey(params, "Poisson's ratio") == true
-        ν = get_property(params, "Poisson's ratio")
+        ν = get_real_property(params, "Poisson's ratio")
         if haskey(params, "bulk modulus") == true
-            κ = get_property(params, "bulk modulus")
+            κ = get_real_property(params, "bulk modulus")
             E = 3κ * (1 - 2ν)
             λ = 3κ * ν / (1 + ν)
             μ = 3κ * (1 - 2ν) / 2(1 + ν)
         elseif haskey(params, "Lamé's first constant") == true
-            λ = get_property(params, "Lamé's first constant")
+            λ = get_real_property(params, "Lamé's first constant")
             E = λ * (1 + ν) * (1 - 2ν) / ν
             κ = λ * (1 + ν) / 3ν
             μ = λ * (1 - 2ν) / 2ν
         elseif haskey(params, "shear modulus") == true
-            μ = get_property(params, "shear modulus")
+            μ = get_real_property(params, "shear modulus")
             E = 2μ * (1 + ν)
             κ = 2μ * (1 + ν) / 3(1 - 2ν)
             λ = 2μ * ν / (1 - 2ν)

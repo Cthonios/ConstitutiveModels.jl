@@ -1,5 +1,11 @@
 module ConstitutiveModels
 
+# input helpers
+export ElasticConstants
+export get_complex_property,
+       get_real_property,
+       get_string_property
+
 # methods
 export as_tensor,
        bulk_modulus,
