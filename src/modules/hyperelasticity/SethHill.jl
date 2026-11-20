@@ -25,8 +25,8 @@ $(TYPEDSIGNATURES)
 """
 function initialize_props(::SethHill, inputs::Dict{String})
     ec = ElasticConstants(inputs)
-    m  = get_property(inputs, "m", 1.0)
-    n  = get_property(inputs, "n", 1.0)
+    m  = get_real_property(inputs, "m", 1.0)
+    n  = get_real_property(inputs, "n", 1.0)
     return [ec.κ, ec.μ, m, n]
 end
 

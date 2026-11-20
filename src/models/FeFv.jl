@@ -141,10 +141,10 @@ end
 
 function initialize_props(model::FeFv, inputs::Dict{String})
     return [
-        get_property(inputs, "density"),
+        get_real_property(inputs, "density"),
         initialize_props(model.model_eq, inputs)...,
-        get_property(inputs, "G neq"),
-        get_property(inputs, "relaxation time")
+        get_real_property(inputs, "G neq"),
+        get_real_property(inputs, "relaxation time")
     ]
 end
 

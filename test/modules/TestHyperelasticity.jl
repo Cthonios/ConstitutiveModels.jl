@@ -664,29 +664,29 @@ function test_seth_hill()
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,
-        "m"               => 1,
-        "n"               => 1
+        "m"               => 1.0,
+        "n"               => 1.0
     )
     inputs_1_2 = Dict(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,
-        "m"               => 1,
-        "n"               => 2
+        "m"               => 1.0,
+        "n"               => 2.0
     )
     inputs_2_1 = Dict(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,
-        "m"               => 2,
-        "n"               => 1
+        "m"               => 2.0,
+        "n"               => 1.0
     )
     inputs_2_2 = Dict(
         "density"         => 1.0,
         "Young's modulus" => 1.0,
         "Poisson's ratio" => 0.3,
-        "m"               => 2,
-        "n"               => 2
+        "m"               => 2.0,
+        "n"               => 2.0
     )
     model = Hyperelastic(SethHill())
     test_seth_hill_simple_shear(model, inputs_neohookean)

@@ -36,26 +36,65 @@ function property_not_found_error(inputs, key)
     throw(PropertyNotFoundError(inputs, key))
 end
 
-function get_property(inputs::Dict{String}, key::String, default = nothing)
-    val = get(inputs, key, default)
-    if val === nothing
-        property_not_found_error(inputs, key)
-    elseif isa(val, Number)
-        # scalar value case
-        # if isa(val, Float64)
-        #     return val::Float64
-        # return val::Float64
-        return val
-    elseif isa(val, Dict)
-        # one of many potential cases
-        if haskey(val, "mean") && haskey(val, "variance")
-            dist = Normal(val["mean"], val["variance"])
-            return rand(dist)
-        else
-            bad_nested_property_input(val, key)
-        end
-    else
-        # default case
+function _nested_helper(inputs::Dict{String}, key::String, default, ::Type{T}) where T
+    if !haskey(inputs, key)
         return default
+    end
+
+    val = inputs[key]
+
+    if val isa T
+        return val::T
+    elseif val isa Dict
+        nested = val::Dict{String, T}
+        if !haskey(nested, "mean") ||
+           !haskey(nested, "variance")
+            bad_nested_property_input(inputs, key)
+        end
+
+        mean = nested["mean"]
+        variance = nested["variance"]
+
+        if !(mean isa T) || !(variance isa T)
+            bad_nested_property_input(inputs, key)
+        end
+
+        μ = mean::T
+        σ² = variance::T
+
+        return rand(Normal(μ, sqrt(σ²)))
+    else
+        bad_nested_property_input(inputs, key)
+    end
+end
+
+function get_complex_property(inputs::Dict{String}, key::String, default::ComplexF64)
+    return _nested_helper(inputs, key, default, ComplexF64)
+end
+
+function get_complex_property(inputs::Dict{String}, key::String)
+    if !haskey(inputs, key)
+        property_not_found_error(inputs, key)
+    end
+    return get_complex_property(inputs, key, 0.0 + 0.0im)
+end
+
+function get_real_property(inputs::Dict{String}, key::String, default::Float64)
+    return _nested_helper(inputs, key, default, Float64)
+end
+
+function get_real_property(inputs::Dict{String}, key::String)
+    if !haskey(inputs, key)
+        property_not_found_error(inputs, key)
+    end
+    return get_real_property(inputs, key, 0.0)
+end
+
+function get_string_property(inputs::Dict{String}, key::String, default = nothing)
+    val = get(inputs, key, default)
+    if val isa String
+        return val
+    else
+        property_not_found_error(inputs, key)
     end
 end
